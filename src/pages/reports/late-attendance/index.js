@@ -20,6 +20,7 @@ const Index = () => {
   const [selectedUnitId, setSelectedUnitId] = useState(null);
   const [tardinessDataList, setTardinessDataList] = useState([]);
   const [tardinessLoading, setTardinessLoading] = useState(false);
+  const [selectedUnitCode, setSelectedUnitCode] = useState(null);
   const [startDate, setStartDate] = useState(
     new Date().toISOString().slice(0, 10),
   );
@@ -88,6 +89,19 @@ const Index = () => {
     enabled: !!openLevel4Id && !!session?.accessToken,
   });
 
+  // employees by unit_code
+
+  const { data: employeesByUnitCode } = useGetQuery({
+    key: [KEYS.employeesByUnitCode, selectedUnitId],
+    url: `${URLS.employeesByUnitCode}/${selectedUnitCode}`,
+    apiClient: requestPython,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session?.accessToken}`,
+    },
+    enabled: !!selectedUnitCode && !!session?.accessToken,
+  });
+
   // ─── SELECTED UNIT DETAIL ─────────────────────────────────────────────────
 
   const { data: selectedUnitData } = useGetQuery({
@@ -139,10 +153,15 @@ const Index = () => {
   // ─── FETCH TARDINESS + EMPLOYEE DETAILS ───────────────────────────────────
 
   useEffect(() => {
-    if (!workplaceData || workplaceData.length === 0) return;
+    if (!employeesByUnitCode || employeesByUnitCode.length === 0) return;
     if (!session?.accessToken) return;
 
-    const employeeIds = workplaceData.map((item) => item.employee_id);
+    const employeeIds = Array.isArray(employeesByUnitCode)
+      ? employeesByUnitCode
+      : (employeesByUnitCode?.data ?? []);
+
+    if (employeeIds.length === 0) return;
+
     const serialized = JSON.stringify(employeeIds) + startDate;
 
     if (lastSentEmployeeIdsRef.current === serialized) return;
@@ -231,13 +250,14 @@ const Index = () => {
     };
 
     run();
-  }, [workplaceData, startDate, session?.accessToken]);
+  }, [employeesByUnitCode, startDate, session?.accessToken]);
 
   // ─── UNIT SELECT HANDLER ──────────────────────────────────────────────────
 
   const handleNodeClick = useCallback((item, level) => {
     lastSentEmployeeIdsRef.current = null;
     setSelectedUnitId(item.id);
+    setSelectedUnitCode(item.unit_code);
     setTardinessDataList([]);
 
     if (level === 1)
@@ -326,14 +346,14 @@ const Index = () => {
               lastSentEmployeeIdsRef.current = null;
               setStartDate(e.target.value);
             }}
-            className="w-full px-3 py-2 bg-slate-900 border border-white/[0.1] rounded-lg text-sm text-slate-300 font-mono-cyber focus:outline-none focus:border-sky-500/50"
+            className="w-full px-3 py-2 bg-slate-900 border border-white/[0.1] rounded-lg text-lg text-slate-300 font-mono-cyber focus:outline-none focus:border-sky-500/50"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-12 gap-4">
         {/* Left sidebar */}
-        <div className="col-span-3">
+        <div className="col-span-4">
           <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-white/[0.07] p-4 [box-shadow:0_4px_24px_rgba(0,0,0,0.4)] max-h-[600px] overflow-y-auto">
             <h3 className="font-display text-sm font-semibold text-slate-300 mb-3 px-3">
               Структура организации
@@ -436,7 +456,7 @@ const Index = () => {
         </div>
 
         {/* Right content */}
-        <div className="col-span-9">
+        <div className="col-span-8">
           {selectedUnitId && (
             <CustomTable
               title={`Опоздания — ${unitDetailData?.name ?? "Подразделение"}`}
