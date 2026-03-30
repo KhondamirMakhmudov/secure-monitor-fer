@@ -370,7 +370,7 @@ const Index = () => {
 
         return {
           "№": index + 1,
-          Сотрудник: `${item.employee?.first_name ?? item.employee?.firstName ?? "—"} ${item.employee?.last_name ?? item.employee?.lastName ?? ""}`,
+          Сотрудник: `${item.employee?.first_name ?? item.employee?.firstName ?? "—"} ${item.employee?.last_name ?? item.employee?.lastName ?? ""} ${item.employee?.middle_name ?? item.employee?.middleName ?? ""}`,
           "Табельный номер":
             item.employee?.tabel_number ??
             item.employee?.tabelNumber ??
@@ -389,19 +389,84 @@ const Index = () => {
 
       const headers = Object.keys(excelRows[0] || {});
 
+      // Helper function to get cell styling based on content
+      const getCellStyle = (key, value) => {
+        const baseStyle = {
+          font: { sz: 11 },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { argb: "CCCCCC" } },
+            bottom: { style: "thin", color: { argb: "CCCCCC" } },
+            left: { style: "thin", color: { argb: "CCCCCC" } },
+            right: { style: "thin", color: { argb: "CCCCCC" } },
+          },
+        };
+
+        // Status column styling
+        if (key === "Статус") {
+          if (value === "Отсутствует") {
+            return {
+              ...baseStyle,
+              fill: { fgColor: { rgb: "FFE6E6" } }, // Light red
+              font: { sz: 11, color: { rgb: "C00000" }, bold: true }, // Dark red
+            };
+          } else if (value === "Опоздал") {
+            return {
+              ...baseStyle,
+              fill: { fgColor: { rgb: "FFF4E6" } }, // Light orange
+              font: { sz: 11, color: { rgb: "DE7A00" }, bold: true }, // Orange
+            };
+          } else if (value === "Вовремя") {
+            return {
+              ...baseStyle,
+              fill: { fgColor: { rgb: "E6F4EA" } }, // Light green
+              font: { sz: 11, color: { rgb: "04873B" }, bold: true }, // Dark green
+            };
+          }
+        }
+
+        // Tardiness minutes column styling
+        if (key === "Опоздание (мин)") {
+          const minutes = parseInt(value);
+          if (!isNaN(minutes)) {
+            if (minutes <= 5) {
+              return {
+                ...baseStyle,
+                fill: { fgColor: { rgb: "FFFACD" } }, // Light yellow
+                font: { sz: 11, color: { rgb: "8B7500" } },
+              };
+            } else if (minutes <= 15) {
+              return {
+                ...baseStyle,
+                fill: { fgColor: { rgb: "FFE4B5" } }, // Mellow orange
+                font: { sz: 11, color: { rgb: "FF8C00" }, bold: true },
+              };
+            } else {
+              return {
+                ...baseStyle,
+                fill: { fgColor: { rgb: "FFCCCC" } }, // Light red
+                font: { sz: 11, color: { rgb: "C00000" }, bold: true },
+              };
+            }
+          }
+        }
+
+        return baseStyle;
+      };
+
       const data = [
         headers.map((h) => ({
           v: h,
           t: "s",
           s: {
-            font: { bold: true, color: { rgb: "FFFFFFFF" }, sz: 12 },
-            fill: { fgColor: { rgb: "4F81BD" } },
+            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+            fill: { fgColor: { rgb: "366092" } }, // Professional dark blue
             alignment: { horizontal: "center", vertical: "center" },
             border: {
-              top: { style: "thin", color: { rgb: "000000" } },
-              bottom: { style: "thin", color: { rgb: "000000" } },
-              left: { style: "thin", color: { rgb: "000000" } },
-              right: { style: "thin", color: { rgb: "000000" } },
+              top: { style: "medium", color: { rgb: "000000" } },
+              bottom: { style: "medium", color: { rgb: "000000" } },
+              left: { style: "medium", color: { rgb: "000000" } },
+              right: { style: "medium", color: { rgb: "000000" } },
             },
           },
         })),
@@ -409,16 +474,7 @@ const Index = () => {
           headers.map((key) => ({
             v: row[key] ?? "",
             t: "s",
-            s: {
-              font: { sz: 11 },
-              alignment: { horizontal: "center", vertical: "center" },
-              border: {
-                top: { style: "thick", color: { argb: "000000" } },
-                bottom: { style: "thick", color: { argb: "000000" } },
-                left: { style: "thin", color: { argb: "808080" } },
-                right: { style: "thin", color: { argb: "808080" } },
-              },
-            },
+            s: getCellStyle(key, row[key] ?? ""),
           })),
         ),
       ];
@@ -427,7 +483,27 @@ const Index = () => {
         data.map((row) => row.map((cell) => cell.v)),
       );
 
-      worksheet["!cols"] = headers.map(() => ({ wch: 20 }));
+      // Apply all cell styles explicitly (aoa_to_sheet doesn't preserve s automatically).
+      data.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+          const cellAddress = ExcelJS.utils.encode_cell({
+            r: rowIndex,
+            c: colIndex,
+          });
+          if (worksheet[cellAddress]) {
+            worksheet[cellAddress].s = cell.s;
+          }
+        });
+      });
+
+      worksheet["!cols"] = [
+        { wch: 5 },
+        { wch: 25 },
+        { wch: 15 },
+        { wch: 18 },
+        { wch: 15 },
+        { wch: 15 },
+      ];
 
       const workbook = ExcelJS.utils.book_new();
       ExcelJS.utils.book_append_sheet(workbook, worksheet, "Опоздания");

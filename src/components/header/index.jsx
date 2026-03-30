@@ -11,7 +11,7 @@ import { useTheme } from "next-themes";
 
 const navLinks = [
   { href: "/secure-section", label: "Система контроля доступа" },
-  { href: "/late-comers", label: "Отчёты" },
+  { href: "/reports", label: "Отчёты" },
 ];
 
 const Header = ({ bgColor = "bg-white" }) => {

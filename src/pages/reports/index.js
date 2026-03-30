@@ -16,7 +16,9 @@ import {
 } from "@/components/reports";
 import TitleOfThePage from "@/components/title";
 import CyberButton from "@/components/button";
+import ExcelButton from "@/components/button/excel-button";
 import Link from "next/link";
+import * as XLSX from "xlsx-js-style";
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
@@ -67,6 +69,7 @@ const Index = () => {
   const [filterType, setFilterType] = useState("all"); // all | entry | exit
   const [start_date, setStartDate] = useState("");
   const [end_date, setEndDate] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: reports, isLoading } = useGetQuery({
     key: [KEYS.reports, page, pageSize, start_date, end_date],
@@ -131,20 +134,138 @@ const Index = () => {
     return [...new Set(range)];
   };
 
+  // Export to Excel
+  const handleExcelExport = async () => {
+    setIsExporting(true);
+    try {
+      // Helper function to apply the same filters
+      const applyFilters = (data) => {
+        return data.filter((r) => {
+          const name = (r.cardName || "").toLowerCase();
+          const dept = "".toLowerCase();
+          const cp = (r.checkPointName || "").toLowerCase();
+          const matchSearch =
+            !search ||
+            name.includes(search.toLowerCase()) ||
+            dept.includes(search.toLowerCase()) ||
+            cp.includes(search.toLowerCase());
+          const isSuccess = r.errorCode === "Успешно";
+          const matchStatus =
+            filterStatus === "all" ||
+            (filterStatus === "granted" && isSuccess) ||
+            (filterStatus === "denied" && !isSuccess);
+          const matchType =
+            filterType === "all" ||
+            (filterType === "entry" && r.eventType === "Вход") ||
+            (filterType === "exit" && r.eventType === "Выход");
+          return matchSearch && matchStatus && matchType;
+        });
+      };
+
+      // Fetch all data
+      const allData = [];
+      let currentPage = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await requestEventTracker.get(URLS.reports, {
+          headers: { Authorization: `Bearer ${session?.accessToken}` },
+          params: {
+            page: currentPage,
+            pageSize: 100, // Max allowed by API
+            ...(start_date && { start_date }),
+            ...(end_date && { end_date }),
+          },
+        });
+
+        const pageData = response?.data?.data ?? response?.results ?? [];
+        allData.push(...pageData);
+
+        const totalPages =
+          response?.data?.pagination?.totalPages ??
+          Math.ceil(
+            (response?.data?.pagination?.total ?? response?.count ?? 0) / 100,
+          ) ??
+          1;
+
+        if (currentPage >= totalPages) {
+          hasMore = false;
+        }
+        currentPage++;
+      }
+
+      // Apply filters to all data
+      const filteredAllData = applyFilters(allData);
+
+      // Create Excel file
+      const wb = XLSX.utils.book_new();
+      const wsData = [
+        ["#", "Сотрудник", "КПП", "Тип", "Статус", "Дата", "Время"],
+        ...filteredAllData.map((row, idx) => {
+          const isSuccess = row.errorCode === "Успешно";
+          const date = row.realUtc
+            ? dayjs(row.realUtc).format("DD.MM.YYYY")
+            : "–";
+          const time = row.realUtc
+            ? new Date(row.realUtc).toLocaleTimeString("ru-RU", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                timeZone: "Asia/Tashkent",
+              })
+            : "–";
+          return [
+            idx + 1,
+            row.cardName || "–",
+            row.checkPointName || "–",
+            row.eventType || "–",
+            isSuccess ? "Разрешён" : "Запрещён",
+            date,
+            time,
+          ];
+        }),
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      ws["!cols"] = [
+        { wch: 5 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 10 },
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, "Reports");
+      XLSX.writeFile(
+        wb,
+        `reports_${dayjs().format("YYYY-MM-DD_HH-mm-ss")}.xlsx`,
+      );
+    } catch (error) {
+      console.error("Export error:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <>
       <CyberStyles />
       <div className="my-6 sm:my-10 lg:my-14 space-y-6">
         {/* ── Page header ── */}
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start gap-4">
           <TitleOfThePage
             title="Отчёты"
             definition={`Журнал проходов сотрудников · ${totalCount} записей`}
           />
 
-          <Link href="/reports/late-attendance">
-            <CyberButton>Список опаздавших</CyberButton>
-          </Link>
+          <div className="flex items-center gap-2">
+            <ExcelButton onClick={handleExcelExport} disabled={isExporting} />
+            <Link href="/reports/late-attendance">
+              <CyberButton>Список опаздавших</CyberButton>
+            </Link>
+          </div>
         </div>
 
         {/* ── Filters bar ── */}
@@ -373,6 +494,49 @@ const Index = () => {
             );
           }}
         />
+
+        {/* ── Pagination ── */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2">
+            {/* Previous button */}
+            <button
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 rounded-lg font-mono-cyber text-[10px] tracking-widest uppercase border transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-white/[0.06] text-slate-600 hover:border-sky-500/40 hover:text-sky-400 hover:bg-sky-500/[0.06] disabled:hover:border-white/[0.06] disabled:hover:text-slate-600 disabled:hover:bg-transparent"
+            >
+              ← Назад
+            </button>
+
+            {/* Page numbers */}
+            <div className="flex items-center gap-1">
+              {pageRange().map((p, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => typeof p === "number" && setPage(p)}
+                  disabled={p === "..." || p === page}
+                  className={`px-3 py-2 rounded-lg font-mono-cyber text-[10px] tracking-widest uppercase border transition-all duration-150 ${
+                    p === page
+                      ? "bg-sky-500/20 border-sky-500/40 text-sky-400 cursor-default"
+                      : p === "..."
+                        ? "bg-transparent border-transparent text-slate-600 cursor-default"
+                        : "bg-transparent border-white/[0.06] text-slate-600 hover:border-sky-500/40 hover:text-sky-400 hover:bg-sky-500/[0.06]"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            {/* Next button */}
+            <button
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 rounded-lg font-mono-cyber text-[10px] tracking-widest uppercase border transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-white/[0.06] text-slate-600 hover:border-sky-500/40 hover:text-sky-400 hover:bg-sky-500/[0.06] disabled:hover:border-white/[0.06] disabled:hover:text-slate-600 disabled:hover:bg-transparent"
+            >
+              Далее →
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
