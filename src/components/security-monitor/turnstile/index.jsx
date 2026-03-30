@@ -6,6 +6,7 @@ import LockOpenIcon from "@mui/icons-material/LockOpen";
 import usePostPythonQuery from "@/hooks/python/usePostQuery";
 import { URLS } from "@/constants/url";
 import { useTheme } from "next-themes";
+import { config } from "@/config";
 
 const CyberStyles = () => (
   <style>{`
@@ -91,7 +92,7 @@ const Turnstile = ({ ipEntry, ipExit }) => {
       return;
     }
     openTurnstile({
-      url: URLS.openDoor,
+      url: `${config.PYTHON_API_URL_REPORT}${URLS.openDoor}`,
       attributes: { ipAddress: String(ip) },
     });
     if (isOpen) return;

@@ -16,9 +16,9 @@ export default function ExcelButton({ onClick, disabled = false }) {
       animate={{ width: isHovering ? 180 : 38 }}
       transition={{ duration: 0.3 }}
       className={`flex items-center py-[10px] px-[8px] rounded-[8px] overflow-hidden text-white gap-2 ${
-        disabled 
-          ? 'bg-gray-400 cursor-not-allowed' 
-          : 'bg-[#00733B] hover:bg-[#00733bf1] cursor-pointer'
+        disabled
+          ? "bg-gray-400 cursor-not-allowed"
+          : "bg-[#00733B] hover:bg-[#00733bf1] cursor-pointer"
       }`}
     >
       <Image
@@ -34,7 +34,7 @@ export default function ExcelButton({ onClick, disabled = false }) {
         transition={{ duration: 0.2 }}
         className="text-xs lg:text-sm font-gilroy whitespace-nowrap"
       >
-        {disabled ? 'Загрузка...' : 'Скачать Excel файл'}
+        {disabled ? "Загрузка..." : "Скачать Excel файл"}
       </motion.span>
     </motion.button>
   );

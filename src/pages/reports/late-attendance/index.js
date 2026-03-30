@@ -5,8 +5,11 @@ import useGetQuery from "@/hooks/all/useGetQuery";
 import { requestPython } from "@/services/api";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useCallback, useRef } from "react";
+import ExcelJS from "xlsx-js-style";
+import dayjs from "dayjs";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ExcelButton from "@/components/button/excel-button";
 import { CustomTable } from "@/components/reports";
 import { config } from "@/config";
 
@@ -21,9 +24,13 @@ const Index = () => {
   const [tardinessDataList, setTardinessDataList] = useState([]);
   const [tardinessLoading, setTardinessLoading] = useState(false);
   const [selectedUnitCode, setSelectedUnitCode] = useState(null);
+  const [uploadedEmployeeIds, setUploadedEmployeeIds] = useState([]);
+  const [isUploadingExcel, setIsUploadingExcel] = useState(false);
+  const fileInputRef = useRef(null);
   const [startDate, setStartDate] = useState(
     new Date().toISOString().slice(0, 10),
   );
+  const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
 
   const lastSentEmployeeIdsRef = useRef(null);
 
@@ -153,16 +160,27 @@ const Index = () => {
   // ─── FETCH TARDINESS + EMPLOYEE DETAILS ───────────────────────────────────
 
   useEffect(() => {
-    if (!employeesByUnitCode || employeesByUnitCode.length === 0) return;
     if (!session?.accessToken) return;
+    if (!employeesByUnitCode && uploadedEmployeeIds.length === 0) return;
+    if (
+      Array.isArray(employeesByUnitCode) &&
+      employeesByUnitCode.length === 0 &&
+      uploadedEmployeeIds.length === 0
+    )
+      return;
 
-    const employeeIds = Array.isArray(employeesByUnitCode)
+    const employeeIdsFromUnit = Array.isArray(employeesByUnitCode)
       ? employeesByUnitCode
       : (employeesByUnitCode?.data ?? []);
 
-    if (employeeIds.length === 0) return;
+    const effectiveEmployeeIds =
+      uploadedEmployeeIds && uploadedEmployeeIds.length > 0
+        ? uploadedEmployeeIds
+        : employeeIdsFromUnit;
 
-    const serialized = JSON.stringify(employeeIds) + startDate;
+    if (!effectiveEmployeeIds || effectiveEmployeeIds.length === 0) return;
+
+    const serialized = JSON.stringify(effectiveEmployeeIds) + startDate;
 
     if (lastSentEmployeeIdsRef.current === serialized) return;
     lastSentEmployeeIdsRef.current = serialized;
@@ -181,7 +199,7 @@ const Index = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${session.accessToken}`,
             },
-            body: JSON.stringify({ employeeIds }),
+            body: JSON.stringify({ employeeIds: effectiveEmployeeIds }),
           },
         );
 
@@ -242,6 +260,7 @@ const Index = () => {
         );
 
         setTardinessDataList(itemsWithEmployees);
+        console.log("Tardiness data sample:", itemsWithEmployees[0]);
       } catch (err) {
         console.error("Tardiness fetch error:", err);
       } finally {
@@ -270,6 +289,158 @@ const Index = () => {
       setOpenLevel4Id((prev) => (prev === item.id ? null : item.id));
   }, []);
 
+  const formatTashkentTime = (value) => {
+    if (!value) return "-";
+
+    // If value is just a time string (HH:mm:ss), combine with startDate
+    let dateTimeString = value;
+    if (typeof value === "string" && value.match(/^\d{2}:\d{2}:\d{2}$/)) {
+      dateTimeString = `${startDate}T${value}Z`;
+    } else {
+      // If it's a full datetime string without timezone, add Z
+      if (
+        typeof value === "string" &&
+        !value.endsWith("Z") &&
+        !value.includes("+") &&
+        !value.includes("-", 10)
+      ) {
+        dateTimeString = value + "Z";
+      }
+    }
+
+    const date = new Date(dateTimeString);
+    if (Number.isNaN(date.getTime())) return value;
+
+    return new Intl.DateTimeFormat("ru-RU", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZone: "Asia/Tashkent",
+      hour12: false,
+    }).format(date);
+  };
+  const clearUploadedEmployees = () => {
+    setUploadedEmployeeIds([]);
+    lastSentEmployeeIdsRef.current = null;
+    setTardinessDataList([]);
+  };
+
+  const handleDownloadExcel = async () => {
+    if (tardinessDataList.length === 0) {
+      alert("Нет данных для экспорта.");
+      return;
+    }
+
+    setIsDownloadingExcel(true);
+
+    try {
+      const excelRows = tardinessDataList.map((item, index) => {
+        let timeStr = "—";
+        if (item.firstIn) {
+          let dateTimeString = item.firstIn;
+
+          // If it's just a time string (HH:mm:ss), combine with startDate
+          if (
+            typeof item.firstIn === "string" &&
+            item.firstIn.match(/^\d{2}:\d{2}:\d{2}$/)
+          ) {
+            dateTimeString = `${startDate}T${item.firstIn}Z`;
+          } else {
+            // If it's a full datetime string without timezone, add Z
+            if (
+              typeof item.firstIn === "string" &&
+              !item.firstIn.endsWith("Z") &&
+              !item.firstIn.includes("+") &&
+              !item.firstIn.includes("-", 10)
+            ) {
+              dateTimeString = item.firstIn + "Z";
+            }
+          }
+
+          const date = new Date(dateTimeString);
+          if (!Number.isNaN(date.getTime())) {
+            timeStr = date.toLocaleString("ru-RU", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              timeZone: "Asia/Tashkent",
+            });
+          }
+        }
+
+        return {
+          "№": index + 1,
+          Сотрудник: `${item.employee?.first_name ?? item.employee?.firstName ?? "—"} ${item.employee?.last_name ?? item.employee?.lastName ?? ""}`,
+          "Табельный номер":
+            item.employee?.tabel_number ??
+            item.employee?.tabelNumber ??
+            item.employeeId ??
+            "—",
+          "Время прихода (UTC+5)": timeStr,
+          "Опоздание (мин)":
+            item.tardinessMinutes > 0 ? item.tardinessMinutes : "—",
+          Статус: item.absent
+            ? "Отсутствует"
+            : item.isLate
+              ? "Опоздал"
+              : "Вовремя",
+        };
+      });
+
+      const headers = Object.keys(excelRows[0] || {});
+
+      const data = [
+        headers.map((h) => ({
+          v: h,
+          t: "s",
+          s: {
+            font: { bold: true, color: { rgb: "FFFFFFFF" }, sz: 12 },
+            fill: { fgColor: { rgb: "4F81BD" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+              top: { style: "thin", color: { rgb: "000000" } },
+              bottom: { style: "thin", color: { rgb: "000000" } },
+              left: { style: "thin", color: { rgb: "000000" } },
+              right: { style: "thin", color: { rgb: "000000" } },
+            },
+          },
+        })),
+        ...excelRows.map((row) =>
+          headers.map((key) => ({
+            v: row[key] ?? "",
+            t: "s",
+            s: {
+              font: { sz: 11 },
+              alignment: { horizontal: "center", vertical: "center" },
+              border: {
+                top: { style: "thick", color: { argb: "000000" } },
+                bottom: { style: "thick", color: { argb: "000000" } },
+                left: { style: "thin", color: { argb: "808080" } },
+                right: { style: "thin", color: { argb: "808080" } },
+              },
+            },
+          })),
+        ),
+      ];
+
+      const worksheet = ExcelJS.utils.aoa_to_sheet(
+        data.map((row) => row.map((cell) => cell.v)),
+      );
+
+      worksheet["!cols"] = headers.map(() => ({ wch: 20 }));
+
+      const workbook = ExcelJS.utils.book_new();
+      ExcelJS.utils.book_append_sheet(workbook, worksheet, "Опоздания");
+
+      ExcelJS.writeFile(workbook, `Опоздания-${startDate}.xlsx`);
+    } catch (err) {
+      console.error("Ошибка при экспорте Excel:", err);
+      alert("Ошибка при экспорте данных.");
+    } finally {
+      setIsDownloadingExcel(false);
+    }
+  };
+
   // ─── TREE NODE ────────────────────────────────────────────────────────────
 
   const isLevelOpen = (level, id) => {
@@ -279,6 +450,11 @@ const Index = () => {
     if (level === 4) return openLevel4Id === id;
     return false;
   };
+
+  console.log(
+    "Full first item:",
+    JSON.stringify(tardinessDataList[0], null, 2),
+  );
 
   const TreeNode = ({ item, level, hasChildren }) => {
     const isSelected = selectedUnitId === item.id;
@@ -457,13 +633,32 @@ const Index = () => {
 
         {/* Right content */}
         <div className="col-span-8">
-          {selectedUnitId && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <ExcelButton
+                onClick={handleDownloadExcel}
+                disabled={isDownloadingExcel || tardinessDataList.length === 0}
+                label="Скачать Excel"
+              />
+            </div>
+            <div className="text-xs text-slate-400">
+              {uploadedEmployeeIds.length > 0
+                ? `Загружено сотрудников: ${uploadedEmployeeIds.length}`
+                : ""}
+            </div>
+          </div>
+
+          {(selectedUnitId || uploadedEmployeeIds.length > 0) && (
             <CustomTable
-              title={`Опоздания — ${unitDetailData?.name ?? "Подразделение"}`}
+              title={`Опоздания — ${
+                uploadedEmployeeIds.length > 0
+                  ? `Загруженные сотрудники`
+                  : (unitDetailData?.name ?? "Подразделение")
+              }`}
               columns={[
                 "#",
                 "Сотрудник",
-                "Время прихода",
+                "Время прихода (Asia/Tashkent UTC+5)",
                 "Опоздание (мин)",
                 "Статус",
               ]}
@@ -485,12 +680,15 @@ const Index = () => {
                       )}
                       <div>
                         <div className="font-mono-cyber">
+                          {item.employee?.last_name ??
+                            item.employee?.lastName ??
+                            ""}{" "}
                           {item.employee?.first_name ??
                             item.employee?.firstName ??
                             "—"}{" "}
-                          {item.employee?.last_name ??
-                            item.employee?.lastName ??
-                            ""}
+                          {item.employee?.middle_name ??
+                            item.employee?.middleName ??
+                            "—"}{" "}
                         </div>
                         <div className="text-xs text-slate-500 mt-0.5">
                           {item.employee?.tabel_number ??
@@ -501,7 +699,7 @@ const Index = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-300 font-mono-cyber">
-                    {item.firstIn ?? "-"}
+                    {formatTashkentTime(item?.firstIn)}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-300 font-mono-cyber">
                     {item.tardinessMinutes > 0
