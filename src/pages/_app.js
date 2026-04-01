@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { useTheme } from "next-themes";
 import { Hydrate, QueryClientProvider } from "@tanstack/react-query";
 import ClientOnlyToaster from "@/components/toast";
 import { SessionProvider } from "next-auth/react";
@@ -12,14 +13,38 @@ import "@/styles/loader.css";
 
 import Layout from "@/components/layout";
 
+function AppContent({ Component, pageProps }) {
+  const router = useRouter();
+  const isHomePage = router.pathname === "/";
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [theme]);
+
+  return (
+    <>
+      {isHomePage ? (
+        <Component {...pageProps} />
+      ) : (
+        <Layout bgColor={pageProps.bgColor} headerBg={pageProps.headerBg}>
+          <Component {...pageProps} />
+        </Layout>
+      )}
+      <ClientOnlyToaster />
+    </>
+  );
+}
+
 export default function App({
   Component,
   pageProps: { session, ...pageProps },
 }) {
   const [queryClient] = useState(() => reactQueryClient);
-  const router = useRouter();
-
-  const isHomePage = router.pathname === "/";
 
   const [mounted, setMounted] = useState(false);
 
@@ -39,15 +64,13 @@ export default function App({
             value={{ light: "light", dark: "dark" }}
           >
             <CssBaseline />
-            {isHomePage ? (
-              <Component {...pageProps} />
-            ) : (
-              <Layout bgColor={pageProps.bgColor} headerBg={pageProps.headerBg}>
-                <Component {...pageProps} />
-              </Layout>
-            )}
-
-            <ClientOnlyToaster />
+            <AppContent Component={Component} pageProps={pageProps} />
+          </NextThemesProvider>
+        </Hydrate>
+      </QueryClientProvider>
+    </SessionProvider>
+  );
+}
           </NextThemesProvider>
         </Hydrate>
       </QueryClientProvider>

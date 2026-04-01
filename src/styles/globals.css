@@ -13,7 +13,12 @@ body {
   @apply bg-white text-black;
 }
 
-.dark body {
+:root.dark {
+  --background: #0F172A;
+  --foreground: #ffffff;
+}
+
+body.dark {
   @apply bg-[#0F172A] text-white;
 }
 
@@ -93,7 +98,6 @@ header {
 * {
   font-family: "Nunito Sans", sans-serif !important;
   box-sizing: border-box;
-  background: "#E9E9E9";
 }
 
 .login {
