@@ -15,7 +15,6 @@ import StarOutlinedIcon from "@mui/icons-material/StarOutlined";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import LoginIcon from "@mui/icons-material/Login";
 import dayjs from "dayjs";
-import { useTheme } from "next-themes";
 
 // Constants
 const TIME_SECTION_NAMES = {
@@ -109,14 +108,8 @@ const CornerGray = ({ pos }) => {
 };
 
 // --- Info tile ---
-const InfoTile = ({ icon, label, value, isSuccess, isDark }) => (
-  <div
-    className={`rounded-xl p-3 space-y-1 ${
-      isDark
-        ? "bg-white/[0.02] border border-white/[0.06]"
-        : "bg-white border border-slate-200"
-    }`}
-  >
+const InfoTile = ({ icon, label, value, isSuccess }) => (
+  <div className="rounded-xl p-3 space-y-1 bg-white/[0.02] border border-white/[0.06]">
     <div className="flex items-center gap-1.5">
       <span className={isSuccess ? "text-green-400" : "text-red-400"}>
         {icon}
@@ -125,11 +118,7 @@ const InfoTile = ({ icon, label, value, isSuccess, isDark }) => (
         {label}
       </span>
     </div>
-    <p
-      className={`text-sm font-semibold leading-snug ${isDark ? "text-slate-300" : "text-slate-700"}`}
-    >
-      {value}
-    </p>
+    <p className="text-sm font-semibold leading-snug text-slate-300">{value}</p>
   </div>
 );
 
@@ -156,7 +145,6 @@ const CyberDivider = ({ isSuccess }) => (
 // Main Component
 // ============================================================
 const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
-  const { theme } = useTheme();
   const { data: session } = useSession();
   const [employeeInfo, setEmployeeInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -215,7 +203,6 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
     : data?.card_name || "Неизвестно";
 
   const isEntry = data?.event_type === "Вход";
-  const isDark = theme === "dark";
 
   // ── EMPTY STATE ──────────────────────────────────────────
   if (!data) {
@@ -224,11 +211,7 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
         <CyberStyles />
         <motion.div
           {...ANIMATIONS.fadeIn}
-          className={`cyber-flicker relative rounded-2xl flex items-center justify-center ${
-            isDark
-              ? "bg-gradient-to-br from-slate-900 to-slate-950 border border-white/[0.06]"
-              : "bg-gradient-to-br from-white to-slate-100 border border-slate-200"
-          } ${variant === "main" ? "min-h-[400px] p-12" : "min-h-[150px] p-6"}`}
+          className={`cyber-flicker relative rounded-2xl flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 border border-white/[0.06] ${variant === "main" ? "min-h-[400px] p-12" : "min-h-[150px] p-6"}`}
         >
           <CornerGray pos="tl" />
           <CornerGray pos="tr" />
@@ -261,11 +244,7 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
         <CyberStyles />
         <motion.div
           {...ANIMATIONS.fadeIn}
-          className={`cyber-flicker relative rounded-2xl overflow-hidden border p-5 transition-shadow hover:shadow-lg ${
-            isDark
-              ? "bg-gradient-to-br from-slate-900 to-slate-950"
-              : "bg-gradient-to-br from-white to-slate-100"
-          } ${
+          className={`cyber-flicker relative rounded-2xl overflow-hidden border p-5 transition-shadow hover:shadow-lg bg-gradient-to-br from-slate-900 to-slate-950 ${
             isSuccess
               ? "border-green-400/30 [box-shadow:0_0_24px_rgba(0,255,136,0.15),0_8px_32px_rgba(0,0,0,0.4)]"
               : "border-red-500/30 [box-shadow:0_0_24px_rgba(255,51,85,0.15),0_8px_32px_rgba(0,0,0,0.4)]"
@@ -315,11 +294,7 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h3
-                className={`font-display text-base font-bold truncate mb-2 ${
-                  isDark ? "text-slate-100" : "text-slate-900"
-                }`}
-              >
+              <h3 className="font-display text-base font-bold truncate mb-2 text-slate-100">
                 {fullName}
               </h3>
               {isValidUser && employeeInfo ? (
@@ -337,13 +312,7 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
                   Информация о сотруднике недоступна
                 </p>
               )}
-              <div
-                className={`mt-2.5 pt-2.5 flex items-center gap-1.5 ${
-                  isDark
-                    ? "border-t border-white/[0.06]"
-                    : "border-t border-slate-200"
-                }`}
-              >
+              <div className="mt-2.5 pt-2.5 flex items-center gap-1.5 border-t border-white/[0.06]">
                 <AccessTimeOutlinedIcon
                   sx={{ fontSize: 13, color: "#475569" }}
                 />
@@ -364,11 +333,7 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
       <CyberStyles />
       <motion.div
         {...ANIMATIONS.fadeIn}
-        className={`cyber-flicker cyber-scanline relative rounded-2xl overflow-hidden border ${
-          isDark
-            ? "bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900"
-            : "bg-gradient-to-br from-white via-slate-50 to-white"
-        } ${
+        className={`cyber-flicker cyber-scanline relative rounded-2xl overflow-hidden border ${"bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900"} ${
           isSuccess
             ? "cyber-scanline-green border-green-400/30 [box-shadow:0_0_0_1px_rgba(0,255,136,0.08),0_0_40px_rgba(0,255,136,0.2),0_24px_64px_rgba(0,0,0,0.5)]"
             : "cyber-scanline-red border-red-500/30 [box-shadow:0_0_0_1px_rgba(255,51,85,0.08),0_0_40px_rgba(255,51,85,0.2),0_24px_64px_rgba(0,0,0,0.5)]"
@@ -422,20 +387,10 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span
-              className={`font-mono-cyber text-[11px] tracking-widest ${
-                isDark ? "text-slate-500" : "text-slate-600"
-              }`}
-            >
+            <span className="font-mono-cyber text-[11px] tracking-widest text-slate-500">
               {formattedDate}
             </span>
-            <span
-              className={`font-mono-cyber text-[10px] font-bold px-2 py-0.5 rounded text-sky-400 ${
-                isDark
-                  ? "bg-slate-800 border border-slate-700"
-                  : "bg-slate-100 border border-slate-300"
-              }`}
-            >
+            <span className="font-mono-cyber text-[10px] font-bold px-2 py-0.5 rounded text-sky-400 bg-slate-800 border border-slate-700">
               SYS-02
             </span>
           </div>
@@ -465,9 +420,7 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
               </div>
               {/* ID chip */}
               <div
-                className={`absolute -bottom-2 -right-2 font-mono-cyber text-[9px] font-bold px-1.5 py-0.5 rounded border ${
-                  isDark ? "bg-slate-950" : "bg-white"
-                } ${
+                className={`absolute -bottom-2 -right-2 font-mono-cyber text-[9px] font-bold px-1.5 py-0.5 rounded border bg-slate-950 ${
                   isSuccess
                     ? "border-green-400/40 text-green-400"
                     : "border-red-500/40 text-red-400"
@@ -479,11 +432,7 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
 
             {/* Name + info grid */}
             <div className="flex-1 min-w-0">
-              <h1
-                className={`font-display text-2xl font-bold mb-3 leading-tight ${
-                  isDark ? "text-slate-100" : "text-slate-900"
-                }`}
-              >
+              <h1 className="font-display text-2xl font-bold mb-3 leading-tight text-slate-100">
                 {fullName}
               </h1>
               {isValidUser && employeeInfo ? (
@@ -495,28 +444,24 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
                       employeeInfo.workplace?.organizational_unit?.name || "–"
                     }
                     isSuccess={isSuccess}
-                    isDark={isDark}
                   />
                   <InfoTile
                     icon={<PersonOutlineOutlinedIcon sx={{ fontSize: 15 }} />}
                     label="Должность"
                     value={employeeInfo.workplace?.position?.name || "–"}
                     isSuccess={isSuccess}
-                    isDark={isDark}
                   />
                   <InfoTile
                     icon={<MeetingRoomIcon sx={{ fontSize: 15 }} />}
                     label="Тип двери"
                     value={data.event_type}
                     isSuccess={isSuccess}
-                    isDark={isDark}
                   />
                   <InfoTile
                     icon={<AccessTimeOutlinedIcon sx={{ fontSize: 15 }} />}
                     label="Время прохода"
                     value={timestamp}
                     isSuccess={isSuccess}
-                    isDark={isDark}
                   />
                 </div>
               ) : (

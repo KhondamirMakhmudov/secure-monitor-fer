@@ -8,27 +8,18 @@ import { useRouter } from "next/router";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import ContentLoader from "@/components/loader";
-import ThemeSwitcher from "@/components/theme-select";
-import { useTheme } from "next-themes";
 import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 
 export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { theme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const isDark = mounted && (resolvedTheme || theme) === "dark";
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const [savedLogins, setSavedLogins] = useState([]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("logins") || "[]");
@@ -128,8 +119,8 @@ export default function Home() {
   };
 
   return (
-    <>
-      <style>{`
+    <div suppressHydrationWarning>
+      <style suppressHydrationWarning>{`
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&display=swap');
         
         @keyframes gridPulse {
@@ -191,13 +182,9 @@ export default function Home() {
         .font-display-cyber { font-family: 'Rajdhani', sans-serif; }
       `}</style>
 
-      <div className={isDark ? "dark" : ""}>
+      <div className="dark">
         <motion.div
-          className={`login relative min-h-screen overflow-hidden ${
-            isDark
-              ? "bg-gradient-to-br from-slate-950 via-blue-950/20 to-slate-900"
-              : "bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100"
-          }`}
+          className="login relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950/20 to-slate-900"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
@@ -211,18 +198,6 @@ export default function Home() {
           {/* Ambient light orbs */}
           <div className="absolute top-1/4 -left-32 w-64 h-64 bg-blue-500/20 dark:bg-blue-500/10 rounded-full blur-3xl" />
           <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-cyan-500/20 dark:bg-cyan-500/10 rounded-full blur-3xl" />
-
-          {/* Theme Switcher - Top Right */}
-          <motion.div
-            className="absolute top-6 right-6 z-50"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-          >
-            <div className="backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 rounded-full p-2 shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-              <ThemeSwitcher />
-            </div>
-          </motion.div>
 
           {isLoading && (
             <div className="fixed inset-0 z-[9999] bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center">
@@ -239,13 +214,7 @@ export default function Home() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                <div
-                  className={`relative backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden p-8 sm:p-10 lg:p-12 ${
-                    isDark
-                      ? "bg-slate-900/90 border border-slate-700/50"
-                      : "bg-white/90 border border-slate-200/50"
-                  }`}
-                >
+                <div className="relative backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden p-8 sm:p-10 lg:p-12 bg-slate-900/90 border border-slate-700/50">
                   {/* Corner accents */}
                   <div className="corner-accent corner-tl pulse-border" />
                   <div className="corner-accent corner-tr pulse-border" />
@@ -341,20 +310,12 @@ export default function Home() {
                         {/* Saved logins */}
                         {savedLogins.length > 0 && (
                           <motion.div
-                            className={`mb-6 p-4 rounded-xl border ${
-                              isDark
-                                ? "bg-slate-800/50 border-slate-700/50"
-                                : "bg-blue-50/50 border-blue-200/50"
-                            }`}
+                            className="mb-6 p-4 rounded-xl border bg-slate-800/50 border-slate-700/50"
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             transition={{ duration: 0.4 }}
                           >
-                            <p
-                              className={`text-xs font-mono-cyber mb-3 flex items-center gap-2 ${
-                                isDark ? "text-slate-400" : "text-slate-600"
-                              }`}
-                            >
+                            <p className="text-xs font-mono-cyber mb-3 flex items-center gap-2 text-slate-400">
                               <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                               СОХРАНЕННЫЕ АККАУНТЫ
                             </p>
@@ -365,11 +326,7 @@ export default function Home() {
                                   onClick={() => handleSelectLogin(login)}
                                   whileHover={{ scale: 1.05, y: -2 }}
                                   whileTap={{ scale: 0.95 }}
-                                  className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-lg border cursor-pointer hover:shadow-lg hover:shadow-blue-500/20 transition-all ${
-                                    isDark
-                                      ? "bg-slate-900 border-slate-700 hover:border-blue-500"
-                                      : "bg-white border-blue-200 hover:border-blue-400"
-                                  }`}
+                                  className="group relative flex items-center gap-2 px-4 py-2.5 rounded-lg border cursor-pointer hover:shadow-lg hover:shadow-blue-500/20 transition-all bg-slate-900 border-slate-700 hover:border-blue-500"
                                   initial={{ opacity: 0, scale: 0.8 }}
                                   animate={{ opacity: 1, scale: 1 }}
                                   transition={{ delay: i * 0.05 }}
@@ -377,13 +334,7 @@ export default function Home() {
                                   <span className="w-7 h-7 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-white text-xs font-bold shadow-lg">
                                     {login.username.charAt(0).toUpperCase()}
                                   </span>
-                                  <span
-                                    className={`text-sm font-mono-cyber transition-colors ${
-                                      isDark
-                                        ? "text-slate-300 group-hover:text-blue-400"
-                                        : "text-slate-700 group-hover:text-blue-600"
-                                    }`}
-                                  >
+                                  <span className="text-sm font-mono-cyber transition-colors text-slate-300 group-hover:text-blue-400">
                                     {login.username}
                                   </span>
                                   <button
@@ -392,11 +343,7 @@ export default function Home() {
                                       e.stopPropagation();
                                       removeLogin(login.username);
                                     }}
-                                    className={`ml-2 w-5 h-5 flex items-center justify-center rounded-full text-red-500 hover:text-red-700 transition-all ${
-                                      isDark
-                                        ? "bg-red-900/30 hover:bg-red-900/50"
-                                        : "bg-red-100 hover:bg-red-200"
-                                    }`}
+                                    className="ml-2 w-5 h-5 flex items-center justify-center rounded-full text-red-500 hover:text-red-700 transition-all bg-red-900/30 hover:bg-red-900/50"
                                   >
                                     ✕
                                   </button>
@@ -411,14 +358,8 @@ export default function Home() {
                             label="Имя пользователя"
                             type="text"
                             value={username}
-                            labelClass={
-                              isDark ? "!text-slate-300" : "!text-slate-700"
-                            }
-                            inputClass={`!h-[52px] rounded-xl text-base font-mono-cyber ${
-                              isDark
-                                ? "!bg-slate-950 !text-slate-100 !border-slate-700 !placeholder:text-slate-500"
-                                : "!bg-white !text-slate-900 !border-slate-300 !placeholder:text-slate-400"
-                            }`}
+                            labelClass="!text-slate-300"
+                            inputClass="!h-[52px] rounded-xl text-base font-mono-cyber !bg-slate-950 !text-slate-100 !border-slate-700 !placeholder:text-slate-500"
                             onChange={(e) => setUsername(e.target.value)}
                             placeholder="user@system"
                             disabled={isLoading}
@@ -427,14 +368,8 @@ export default function Home() {
                             label="Пароль"
                             type="password"
                             value={password}
-                            labelClass={
-                              isDark ? "!text-slate-300" : "!text-slate-700"
-                            }
-                            inputClass={`!h-[52px] rounded-xl text-base font-mono-cyber ${
-                              isDark
-                                ? "!bg-slate-950 !text-slate-100 !border-slate-700 !placeholder:text-slate-500"
-                                : "!bg-white !text-slate-900 !border-slate-300 !placeholder:text-slate-400"
-                            }`}
+                            labelClass="!text-slate-300"
+                            inputClass="!h-[52px] rounded-xl text-base font-mono-cyber !bg-slate-950 !text-slate-100 !border-slate-700 !placeholder:text-slate-500"
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
                             disabled={isLoading}
@@ -524,21 +459,9 @@ export default function Home() {
               >
                 <div className="relative w-full flex items-center justify-center">
                   {/* Glow effect behind image */}
-                  <div
-                    className={`absolute inset-0 blur-3xl rounded-full transform scale-75 ${
-                      isDark
-                        ? "bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-slate-900/20"
-                        : "bg-gradient-to-br from-blue-500/20 via-cyan-500/20 to-blue-500/20"
-                    }`}
-                  />
+                  <div className="absolute inset-0 blur-3xl rounded-full transform scale-75 bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-slate-900/20" />
 
-                  <div
-                    className={`absolute inset-[12%] rounded-[28px] border transition-colors ${
-                      isDark
-                        ? "bg-slate-900/30 border-slate-700/40"
-                        : "bg-white/35 border-slate-200/50"
-                    }`}
-                  />
+                  <div className="absolute inset-[12%] rounded-[28px] border transition-colors bg-slate-900/30 border-slate-700/40" />
 
                   {/* Animated geometric shapes */}
                   <motion.div
@@ -578,11 +501,7 @@ export default function Home() {
 
                   {/* Info cards */}
                   <motion.div
-                    className={`absolute -bottom-4 -left-4 backdrop-blur-xl rounded-xl p-4 shadow-xl border hidden lg:block ${
-                      isDark
-                        ? "bg-slate-900/90 border-slate-700/50"
-                        : "bg-white/90 border-slate-200/50"
-                    }`}
+                    className="absolute -bottom-4 -left-4 backdrop-blur-xl rounded-xl p-4 shadow-xl border hidden lg:block bg-slate-900/90 border-slate-700/50"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.8 }}
@@ -604,18 +523,10 @@ export default function Home() {
                         </svg>
                       </div>
                       <div>
-                        <p
-                          className={`text-xs font-mono-cyber ${
-                            isDark ? "text-slate-400" : "text-slate-600"
-                          }`}
-                        >
+                        <p className="text-xs font-mono-cyber text-slate-400">
                           СТАТУС
                         </p>
-                        <p
-                          className={`text-sm font-bold font-display-cyber ${
-                            isDark ? "text-green-400" : "text-green-600"
-                          }`}
-                        >
+                        <p className="text-sm font-bold font-display-cyber text-green-400">
                           ЗАЩИЩЕНО
                         </p>
                       </div>
@@ -623,11 +534,7 @@ export default function Home() {
                   </motion.div>
 
                   <motion.div
-                    className={`absolute -top-4 -right-4 backdrop-blur-xl rounded-xl p-4 shadow-xl border hidden lg:block ${
-                      isDark
-                        ? "bg-slate-900/90 border-slate-700/50"
-                        : "bg-white/90 border-slate-200/50"
-                    }`}
+                    className="absolute -top-4 -right-4 backdrop-blur-xl rounded-xl p-4 shadow-xl border hidden lg:block bg-slate-900/90 border-slate-700/50"
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 1 }}
@@ -649,18 +556,10 @@ export default function Home() {
                         </svg>
                       </div>
                       <div>
-                        <p
-                          className={`text-xs font-mono-cyber ${
-                            isDark ? "text-slate-400" : "text-slate-600"
-                          }`}
-                        >
+                        <p className="text-xs font-mono-cyber text-slate-400">
                           ДОСТУП
                         </p>
-                        <p
-                          className={`text-sm font-bold font-display-cyber ${
-                            isDark ? "text-blue-400" : "text-blue-600"
-                          }`}
-                        >
+                        <p className="text-sm font-bold font-display-cyber text-blue-400">
                           КОНТРОЛЬ
                         </p>
                       </div>
@@ -672,6 +571,6 @@ export default function Home() {
           </div>
         </motion.div>
       </div>
-    </>
+    </div>
   );
 }

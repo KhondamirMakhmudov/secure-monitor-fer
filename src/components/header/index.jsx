@@ -3,36 +3,30 @@
 import Brand from "../brand";
 import { signOut } from "next-auth/react";
 import ExitModal from "../modal/exit-modal";
-import { useEffect, useState } from "react";
-import ThemeSwitcher from "../theme-select";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useTheme } from "next-themes";
+import { useSession } from "next-auth/react";
 
-const navLinks = [
-  { href: "/secure-section", label: "Система контроля доступа" },
-  { href: "/reports", label: "Отчёты" },
-];
-
-const Header = ({ bgColor = "bg-white" }) => {
+const Header = () => {
   const router = useRouter();
-  const { theme } = useTheme();
   const [openExitModal, setOpenExitModal] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const { data: session } = useSession();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDark = mounted && theme === "dark";
+  const navLinks = [
+    { href: "/secure-section", label: "Система контроля доступа" },
+    ...(session?.user?.name !== "security-tpp-2026"
+      ? [{ href: "/reports", label: "Отчёты" }]
+      : []),
+  ];
 
   const handleLogout = () => {
-    signOut({ redirect: true, callbackUrl: "http://11.10.26.30:3000" });
+    signOut({ redirect: true, callbackUrl: "http://10.20.6.30:3000" });
   };
 
   return (
-    <>
-      <style>{`
+    <div suppressHydrationWarning>
+      <style suppressHydrationWarning>{`
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap');
         .font-mono-cyber { font-family: 'Share Tech Mono', monospace; }
         .font-display    { font-family: 'Rajdhani', sans-serif; }
@@ -50,13 +44,7 @@ const Header = ({ bgColor = "bg-white" }) => {
 
       <div className="w-full">
         {/* ── Main header bar ── */}
-        <header
-          className={`relative w-full overflow-hidden rounded-2xl px-4 py-3 sm:px-5 sm:py-4 ${
-            isDark
-              ? "bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-white/[0.07] text-slate-100 [box-shadow:0_4px_32px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.03)]"
-              : "bg-gradient-to-br from-white via-slate-50 to-white border border-slate-200 text-slate-800 [box-shadow:0_4px_32px_rgba(0,0,0,0.08),0_0_0_1px_rgba(15,23,42,0.02)]"
-          }`}
-        >
+        <header className="relative w-full overflow-hidden rounded-2xl px-4 py-3 sm:px-5 sm:py-4 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-white/[0.07] text-slate-100 [box-shadow:0_4px_32px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.03)]">
           {/* Corner brackets */}
           <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-sky-500/60 [box-shadow:0_0_6px_rgba(56,189,248,0.4)]" />
           <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-sky-500/60 [box-shadow:0_0_6px_rgba(56,189,248,0.4)]" />
@@ -64,13 +52,7 @@ const Header = ({ bgColor = "bg-white" }) => {
           <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-sky-500/60 [box-shadow:0_0_6px_rgba(56,189,248,0.4)]" />
 
           {/* Ambient glow */}
-          <div
-            className={`absolute inset-0 pointer-events-none ${
-              isDark
-                ? "bg-[radial-gradient(ellipse_at_50%_0%,rgba(56,189,248,0.04)_0%,transparent_60%)]"
-                : "bg-[radial-gradient(ellipse_at_50%_0%,rgba(56,189,248,0.06)_0%,transparent_60%)]"
-            }`}
-          />
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_0%,rgba(56,189,248,0.04)_0%,transparent_60%)]" />
 
           <div className="relative flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             {/* Brand */}
@@ -87,12 +69,8 @@ const Header = ({ bgColor = "bg-white" }) => {
                         href={href}
                         className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono-cyber text-xs tracking-widest uppercase transition-all duration-200 ${
                           isActive
-                            ? isDark
-                              ? "bg-sky-500/10 border border-sky-500/40 text-sky-300 [box-shadow:0_0_12px_rgba(56,189,248,0.15)]"
-                              : "bg-sky-100 border border-sky-300 text-sky-700"
-                            : isDark
-                              ? "border border-transparent text-slate-400 hover:text-sky-300 hover:border-sky-500/25 hover:bg-sky-500/[0.06]"
-                              : "border border-transparent text-slate-600 hover:text-sky-600 hover:border-sky-300 hover:bg-sky-50"
+                            ? "bg-sky-500/10 border border-sky-500/40 text-sky-300 [box-shadow:0_0_12px_rgba(56,189,248,0.15)]"
+                            : "border border-transparent text-slate-400 hover:text-sky-300 hover:border-sky-500/25 hover:bg-sky-500/[0.06]"
                         }`}
                       >
                         {isActive && (
@@ -108,14 +86,10 @@ const Header = ({ bgColor = "bg-white" }) => {
 
             {/* Actions */}
             <div className="flex items-center gap-2 self-start lg:self-auto">
-              <ThemeSwitcher />
-
               {/* Logout button */}
               <button
                 onClick={() => setOpenExitModal(true)}
-                className={`relative overflow-hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono-cyber text-xs tracking-widest uppercase border border-red-500/30 transition-all duration-200 hover:border-red-400/60 hover:bg-red-500/10 hover:[box-shadow:0_0_16px_rgba(255,51,85,0.2)] hover:scale-[1.02] active:scale-[0.98] [box-shadow:0_0_0_1px_rgba(255,51,85,0.08)] sm:px-4 ${
-                  isDark ? "text-red-400 bg-slate-900" : "text-red-500 bg-white"
-                }`}
+                className="relative overflow-hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono-cyber text-xs tracking-widest uppercase border border-red-500/30 transition-all duration-200 hover:border-red-400/60 hover:bg-red-500/10 hover:[box-shadow:0_0_16px_rgba(255,51,85,0.2)] hover:scale-[1.02] active:scale-[0.98] [box-shadow:0_0_0_1px_rgba(255,51,85,0.08)] sm:px-4 text-red-400 bg-slate-900"
               >
                 <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,51,85,0.07)_0%,transparent_60%)]" />
                 <svg
@@ -148,16 +122,8 @@ const Header = ({ bgColor = "bg-white" }) => {
         {/* ── Marquee strip ── */}
         <div className="relative mt-2 w-full overflow-hidden rounded-lg border border-yellow-500/20 bg-yellow-500/[0.06] py-1.5 [box-shadow:0_0_12px_rgba(234,179,8,0.08)]">
           {/* Edge fades */}
-          <div
-            className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r to-transparent z-10 pointer-events-none ${
-              isDark ? "from-slate-950" : "from-white"
-            }`}
-          />
-          <div
-            className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l to-transparent z-10 pointer-events-none ${
-              isDark ? "from-slate-950" : "from-white"
-            }`}
-          />
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none" />
 
           <div className="flex items-center gap-3 px-4">
             <span className="flex-shrink-0 font-mono-cyber text-[9px] font-bold tracking-[0.2em] uppercase text-yellow-500/70 border border-yellow-500/30 px-2 py-0.5 rounded">
@@ -173,7 +139,7 @@ const Header = ({ bgColor = "bg-white" }) => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

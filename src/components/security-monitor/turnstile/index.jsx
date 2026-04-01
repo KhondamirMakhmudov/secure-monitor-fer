@@ -5,7 +5,6 @@ import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import usePostPythonQuery from "@/hooks/python/usePostQuery";
 import { URLS } from "@/constants/url";
-import { useTheme } from "next-themes";
 import { config } from "@/config";
 
 const CyberStyles = () => (
@@ -76,11 +75,9 @@ const Corner = ({ pos, open }) => {
 };
 
 const Turnstile = ({ ipEntry, ipExit }) => {
-  const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const timerRef = useRef(null);
-  const isDark = theme === "dark";
 
   const { mutate: openTurnstile } = usePostPythonQuery({
     listKeyId: "open-door",
@@ -136,12 +133,8 @@ const Turnstile = ({ ipEntry, ipExit }) => {
           <div
             className={`relative h-36 w-full transition-colors duration-700 ${
               isOpen
-                ? isDark
-                  ? "bg-[linear-gradient(135deg,#001a0d,#002211)]"
-                  : "bg-[linear-gradient(135deg,#ecfdf5,#dcfce7)]"
-                : isDark
-                  ? "bg-[linear-gradient(135deg,#1a0008,#220011)]"
-                  : "bg-[linear-gradient(135deg,#fef2f2,#fee2e2)]"
+                ? "bg-[linear-gradient(135deg,#001a0d,#002211)]"
+                : "bg-[linear-gradient(135deg,#1a0008,#220011)]"
             }`}
           >
             {/* Ambient glow */}
@@ -257,9 +250,7 @@ const Turnstile = ({ ipEntry, ipExit }) => {
 
           {/* Countdown bar */}
           {isOpen && (
-            <div
-              className={`h-1 relative overflow-hidden ${isDark ? "bg-slate-900" : "bg-slate-200"}`}
-            >
+            <div className="h-1 relative overflow-hidden bg-slate-900">
               <div
                 key={countdown}
                 className="countdown-bar h-full bg-gradient-to-r from-green-500 to-green-300 [box-shadow:0_0_8px_rgba(0,255,136,0.8)]"
@@ -279,9 +270,7 @@ const Turnstile = ({ ipEntry, ipExit }) => {
             className={`relative overflow-hidden rounded-xl px-6 py-4 font-display text-base font-bold tracking-widest uppercase transition-all duration-300 border ${
               isOpen
                 ? "bg-green-500/10 border-green-400/30 text-green-400/50 cursor-not-allowed"
-                : isDark
-                  ? "bg-slate-900 border-sky-500/40 text-sky-300 hover:border-sky-400/70 hover:bg-sky-500/10 hover:[box-shadow:0_0_20px_rgba(56,189,248,0.25)] hover:scale-[1.02] active:scale-[0.98] [box-shadow:0_0_0_1px_rgba(56,189,248,0.1)]"
-                  : "bg-white border-sky-500/40 text-sky-700 hover:border-sky-500/70 hover:bg-sky-500/10 hover:[box-shadow:0_0_20px_rgba(56,189,248,0.15)] hover:scale-[1.02] active:scale-[0.98]"
+                : "bg-slate-900 border-sky-500/40 text-sky-300 hover:border-sky-400/70 hover:bg-sky-500/10 hover:[box-shadow:0_0_20px_rgba(56,189,248,0.25)] hover:scale-[1.02] active:scale-[0.98] [box-shadow:0_0_0_1px_rgba(56,189,248,0.1)]"
             }`}
           >
             {/* Button inner glow */}
@@ -309,9 +298,7 @@ const Turnstile = ({ ipEntry, ipExit }) => {
             className={`relative overflow-hidden rounded-xl px-6 py-4 font-display text-base font-bold tracking-widest uppercase transition-all duration-300 border ${
               isOpen
                 ? "bg-green-500/10 border-green-400/30 text-green-400/50 cursor-not-allowed"
-                : isDark
-                  ? "bg-slate-900 border-violet-500/40 text-violet-300 hover:border-violet-400/70 hover:bg-violet-500/10 hover:[box-shadow:0_0_20px_rgba(167,139,250,0.25)] hover:scale-[1.02] active:scale-[0.98] [box-shadow:0_0_0_1px_rgba(167,139,250,0.1)]"
-                  : "bg-white border-violet-500/40 text-violet-700 hover:border-violet-500/70 hover:bg-violet-500/10 hover:[box-shadow:0_0_20px_rgba(167,139,250,0.15)] hover:scale-[1.02] active:scale-[0.98]"
+                : "bg-slate-900 border-violet-500/40 text-violet-300 hover:border-violet-400/70 hover:bg-violet-500/10 hover:[box-shadow:0_0_20px_rgba(167,139,250,0.25)] hover:scale-[1.02] active:scale-[0.98] [box-shadow:0_0_0_1px_rgba(167,139,250,0.1)]"
             }`}
           >
             {!isOpen && (
@@ -333,33 +320,13 @@ const Turnstile = ({ ipEntry, ipExit }) => {
         </div>
 
         {/* ── Footer status strip ── */}
-        <div
-          className={`flex items-center justify-between px-3 py-1.5 rounded-lg ${
-            isDark
-              ? "bg-white/[0.02] border border-white/[0.05]"
-              : "bg-white border border-slate-200"
-          }`}
-        >
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-white/[0.02] border border-white/[0.05]">
           <div className="flex items-center gap-2">
-            <span
-              className={`font-mono-cyber text-[9px] tracking-widest uppercase ${
-                isDark ? "text-slate-600" : "text-slate-500"
-              }`}
-            >
+            <span className="font-mono-cyber text-[9px] tracking-widest uppercase text-slate-600">
               ТУРНИКЕТ
             </span>
-            <span
-              className={`font-mono-cyber text-[9px] ${
-                isDark ? "text-slate-700" : "text-slate-400"
-              }`}
-            >
-              ·
-            </span>
-            <span
-              className={`font-mono-cyber text-[9px] tracking-widest ${
-                isDark ? "text-slate-600" : "text-slate-500"
-              }`}
-            >
+            <span className="font-mono-cyber text-[9px] text-slate-700">·</span>
+            <span className="font-mono-cyber text-[9px] tracking-widest text-slate-600">
               SYS-T01
             </span>
           </div>

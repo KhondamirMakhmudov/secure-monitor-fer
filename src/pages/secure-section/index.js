@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, Suspense } from "react";
+import dynamic from "next/dynamic";
 import ConnectionStatus from "@/components/security-monitor/connection-status";
 import Image from "next/image";
 import NewUnifiedPanel from "@/components/security-monitor/new-unified-model";
@@ -7,9 +8,12 @@ import Turnstile from "@/components/security-monitor/turnstile";
 import { useSession } from "next-auth/react";
 import { config } from "@/config";
 
-// ─── Tiny style injection (fonts + keyframes only) ───────────────────────────
-const PageStyles = () => (
-  <style>{`
+// Dynamic component to avoid SSR hydration issues with styles
+const PageStyles = dynamic(
+  async () => {
+    return {
+      default: () => (
+        <style suppressHydrationWarning>{`
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap');
     .font-mono-cyber { font-family: 'Share Tech Mono', monospace; }
     .font-display    { font-family: 'Rajdhani', sans-serif; }
@@ -19,15 +23,19 @@ const PageStyles = () => (
     }
     .pulse-dot { animation: borderPulse 1.5s ease-in-out infinite; }
   `}</style>
+      ),
+    };
+  },
+  { ssr: false },
 );
 
 // ─── Section header ───────────────────────────────────────────────────────────
 const SectionHeader = ({ children, dotColor = "bg-blue-400" }) => (
-  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-slate-200 dark:bg-white/[0.02] dark:border-white/[0.06]">
+  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border-white/[0.06]">
     <div
       className={`w-2 h-2 rounded-full pulse-dot ${dotColor} [box-shadow:0_0_6px_currentColor]`}
     />
-    <p className="font-display text-base font-semibold tracking-wide text-slate-700 dark:text-slate-300 sm:text-lg">
+    <p className="font-display text-base font-semibold tracking-wide text-slate-300 sm:text-lg">
       {children}
     </p>
   </div>
@@ -35,11 +43,11 @@ const SectionHeader = ({ children, dotColor = "bg-blue-400" }) => (
 
 // ─── Checkpoint status pill ───────────────────────────────────────────────────
 const CheckpointPill = ({ name, index }) => (
-  <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white border border-slate-200 dark:bg-white/[0.02] dark:border-white/[0.06] [box-shadow:0_2px_12px_rgba(0,0,0,0.08)] dark:[box-shadow:0_2px_12px_rgba(0,0,0,0.3)]">
+  <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.06] [box-shadow:0_2px_12px_rgba(0,0,0,0.3)]">
     <div
       className={`w-2 h-2 rounded-full pulse-dot ${index === 0 ? "bg-green-400 [box-shadow:0_0_8px_#00ff88]" : "bg-sky-400 [box-shadow:0_0_8px_#38bdf8]"}`}
     />
-    <span className="font-mono-cyber text-xs text-slate-600 dark:text-slate-400 tracking-widest uppercase">
+    <span className="font-mono-cyber text-xs text-slate-400 tracking-widest uppercase">
       {name}
     </span>
   </div>
@@ -47,11 +55,11 @@ const CheckpointPill = ({ name, index }) => (
 
 // ─── Turnstile wrapper card ───────────────────────────────────────────────────
 const TurnstileCard = ({ checkPointName, entryIp, exitIp }) => (
-  <div className="rounded-2xl bg-white border border-slate-200 dark:bg-white/[0.02] dark:border-white/[0.06] p-4 sm:p-5 mt-4 [box-shadow:0_4px_24px_rgba(0,0,0,0.08)] dark:[box-shadow:0_4px_24px_rgba(0,0,0,0.3)]">
+  <div className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-4 sm:p-5 mt-4 [box-shadow:0_4px_24px_rgba(0,0,0,0.3)]">
     {/* Card header */}
-    <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-white/[0.06]">
-      <DoorFrontIcon sx={{ fontSize: 18, color: "#64748b" }} />
-      <span className="font-display text-sm font-bold tracking-widest uppercase text-slate-600 dark:text-slate-500">
+    <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/[0.06]">
+      <DoorFrontIcon sx={{ fontSize: 18, color: "#94a3b8" }} />
+      <span className="font-display text-sm font-bold tracking-widest uppercase text-slate-500">
         Управление турникетами
       </span>
     </div>
@@ -79,10 +87,10 @@ const EmptyState = () => (
       className="h-auto w-full max-w-[300px] sm:max-w-[440px] opacity-60"
     />
     <div className="space-y-2">
-      <p className="font-display text-lg font-semibold text-slate-600 dark:text-slate-400 sm:text-xl">
+      <p className="font-display text-lg font-semibold text-slate-400 sm:text-xl">
         Ожидание событий...
       </p>
-      <p className="font-mono-cyber text-xs text-slate-600 dark:text-slate-500 tracking-widest max-w-sm">
+      <p className="font-mono-cyber text-xs text-slate-500 tracking-widest max-w-sm">
         Подключите систему и дождитесь первого события через турникет
       </p>
     </div>
@@ -231,10 +239,10 @@ const Index = () => {
         {/* ── Page header ── */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <h1 className="font-display text-2xl font-bold tracking-wide text-slate-900 dark:text-slate-100 sm:text-3xl lg:text-4xl">
+            <h1 className="font-display text-2xl font-bold tracking-wide text-slate-100 sm:text-3xl lg:text-4xl">
               Система контроля доступа
             </h1>
-            <p className="font-mono-cyber text-xs text-slate-600 dark:text-slate-500 tracking-widest sm:text-sm">
+            <p className="font-mono-cyber text-xs text-slate-500 tracking-widest sm:text-sm">
               Активность сотрудников в реальном времени
             </p>
           </div>
@@ -309,7 +317,7 @@ const Index = () => {
                   ))
                 ) : (
                   <div className="flex items-center justify-center py-10">
-                    <p className="font-mono-cyber text-xs text-slate-600 dark:text-slate-500 tracking-widest uppercase">
+                    <p className="font-mono-cyber text-xs text-slate-500 tracking-widest uppercase">
                       Архив пуст
                     </p>
                   </div>

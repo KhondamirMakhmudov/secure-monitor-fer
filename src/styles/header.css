@@ -1,0 +1,37 @@
+@import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap");
+
+.font-mono-cyber {
+  font-family: "Share Tech Mono", monospace;
+}
+
+.font-display {
+  font-family: "Rajdhani", sans-serif;
+}
+
+@keyframes borderPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.pulse-dot {
+  animation: borderPulse 1.5s ease-in-out infinite;
+}
+
+.cyber-marquee {
+  animation: marqueeScroll 22s linear infinite;
+  white-space: nowrap;
+}
