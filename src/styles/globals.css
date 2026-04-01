@@ -26,6 +26,10 @@ header {
 }
 
 .dark header {
+  @apply bg-gray-100 text-black;
+}
+
+.dark header {
   @apply bg-[#1F2937] text-white;
 }
 
@@ -231,3 +235,144 @@ header {
 #theme-checkbox + label span:last-of-type {
   color: #cecece;
 }
+
+/* ─── Cyber Animations & Keyframes ─── */
+@keyframes spinnerRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes borderPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes scanline {
+  0% {
+    top: 0%;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+@keyframes cyberPing {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes flicker {
+  0%,
+  92%,
+  100% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 0.85;
+  }
+  96% {
+    opacity: 1;
+  }
+  98% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+/* Cyber Classes */
+.excel-spinner {
+  animation: spinnerRotate 0.75s linear infinite;
+}
+
+.excel-pulse {
+  animation: borderPulse 1.5s ease-in-out infinite;
+}
+
+.cyber-flicker {
+  animation: flicker 9s ease-in-out infinite;
+}
+
+.cyber-scanline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  animation: scanline 4s linear infinite;
+  pointer-events: none;
+}
+
+.cyber-scanline-green::after {
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.35), transparent);
+}
+
+.cyber-scanline-red::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 51, 85, 0.35), transparent);
+}
+
+.ping-ring {
+  animation: cyberPing 1.8s ease-out infinite;
+}
+
+.ping-ring-2 {
+  animation: cyberPing 1.8s ease-out infinite;
+  animation-delay: 0.6s;
+}
+
+.pulse-dot {
+  animation: borderPulse 1.5s ease-in-out infinite;
+}
+
+.status-glow {
+  animation: borderPulse 3s ease-in-out infinite;
+}
+
+.cyber-marquee {
+  animation: marqueeScroll 22s linear infinite;
+  white-space: nowrap;
+}
+
+.shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.07) 50%, rgba(255, 255, 255, 0.03) 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.table-row-hover {
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.table-row-hover:hover {
+  background: rgba(56, 189, 248, 0.04);
+  box-shadow: inset 3px 0 0 rgba(56, 189, 248, 0.5);
+}
+

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { requestPython } from "@/services/api";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/router";
+import useAuthError from "@/hooks/useAuthError";
 
 const useGetQuery = ({
   key = "get-all",
@@ -16,6 +17,7 @@ const useGetQuery = ({
   apiClient = requestPython,
 }) => {
   const router = useRouter();
+  const { setUnauthorized, setForbidden } = useAuthError();
 
   const { isPending, isError, data, error, isFetching } = useQuery({
     queryKey: [key, params],
@@ -39,11 +41,11 @@ const useGetQuery = ({
 
     // 🔴 401
     if (status === 401) {
-      router.replace("/401");
+      setUnauthorized();
     }
     // 🔴 403
     else if (status === 403 && redirectOn403) {
-      router.replace("/403");
+      setForbidden();
     }
     // 🔴 500
     else if (status >= 500 && redirectOn500) {

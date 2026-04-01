@@ -8,17 +8,15 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 
+const navLinks = [
+  { href: "/secure-section", label: "Система контроля доступа" },
+  { href: "/reports", label: "Отчёты" },
+];
+
 const Header = () => {
   const router = useRouter();
   const [openExitModal, setOpenExitModal] = useState(false);
   const { data: session } = useSession();
-
-  const navLinks = [
-    { href: "/secure-section", label: "Система контроля доступа" },
-    ...(session?.user?.name !== "security-tpp-2026"
-      ? [{ href: "/reports", label: "Отчёты" }]
-      : []),
-  ];
 
   const handleLogout = () => {
     signOut({ redirect: true, callbackUrl: "http://10.20.6.30:3000" });
@@ -26,22 +24,6 @@ const Header = () => {
 
   return (
     <div suppressHydrationWarning>
-      <style suppressHydrationWarning>{`
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap');
-        .font-mono-cyber { font-family: 'Share Tech Mono', monospace; }
-        .font-display    { font-family: 'Rajdhani', sans-serif; }
-        @keyframes borderPulse {
-          0%, 100% { opacity: 1;   }
-          50%       { opacity: 0.4; }
-        }
-        @keyframes marqueeScroll {
-          0%   { transform: translateX(100%);  }
-          100% { transform: translateX(-100%); }
-        }
-        .pulse-dot      { animation: borderPulse 1.5s ease-in-out infinite; }
-        .cyber-marquee  { animation: marqueeScroll 22s linear infinite; white-space: nowrap; }
-      `}</style>
-
       <div className="w-full">
         {/* ── Main header bar ── */}
         <header className="relative w-full overflow-hidden rounded-2xl px-4 py-3 sm:px-5 sm:py-4 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-white/[0.07] text-slate-100 [box-shadow:0_4px_32px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.03)]">

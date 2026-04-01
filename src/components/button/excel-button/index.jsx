@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import dynamic from "next/dynamic";
 
 /**
  * ExcelButton — simple download button, always shows icon + label.
@@ -10,31 +9,9 @@ import dynamic from "next/dynamic";
  *  - onClick  : function
  *  - disabled : boolean (shows loading state)
  */
-
-const ExcelStyles = dynamic(
-  async () => {
-    return {
-      default: () => (
-        <style suppressHydrationWarning>{`
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-        .font-mono-cyber { font-family: 'Share Tech Mono', monospace; }
-        @keyframes spinnerRotate { to { transform: rotate(360deg); } }
-        @keyframes borderPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .excel-spinner { animation: spinnerRotate 0.75s linear infinite; }
-        .excel-pulse   { animation: borderPulse 1.5s ease-in-out infinite; }
-      `}</style>
-      ),
-    };
-  },
-  { ssr: false }
-);
-
 export default function ExcelButton({ onClick, disabled = false }) {
   return (
-    <>
-      <ExcelStyles />
-
-      <button
+    <button
         onClick={!disabled ? onClick : undefined}
         disabled={disabled}
         className={[
@@ -93,6 +70,5 @@ export default function ExcelButton({ onClick, disabled = false }) {
           <div className="relative flex-shrink-0 w-1.5 h-1.5 rounded-full bg-green-400 excel-pulse [box-shadow:0_0_6px_#00ff88]" />
         )}
       </button>
-    </>
   );
 }

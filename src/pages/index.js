@@ -121,7 +121,6 @@ export default function Home() {
   return (
     <div suppressHydrationWarning>
       <style suppressHydrationWarning>{`
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&display=swap');
         
         @keyframes gridPulse {
           0%, 100% { opacity: 0.15; }

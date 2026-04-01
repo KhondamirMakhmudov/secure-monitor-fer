@@ -14,7 +14,6 @@ const PageStyles = dynamic(
     return {
       default: () => (
         <style suppressHydrationWarning>{`
-    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap');
     .font-mono-cyber { font-family: 'Share Tech Mono', monospace; }
     .font-display    { font-family: 'Rajdhani', sans-serif; }
     @keyframes borderPulse {

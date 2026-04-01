@@ -24,26 +24,6 @@
  *  <CyberButton fullWidth variant="primary" type="submit">Войти</CyberButton>
  */
 
-const CyberStyles = () => (
-  <div suppressHydrationWarning>
-    <style suppressHydrationWarning>{`
-    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap');
-    .font-mono-cyber { font-family: 'Share Tech Mono', monospace; }
-    .font-display    { font-family: 'Rajdhani', sans-serif; }
-
-    @keyframes spinnerRotate {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes borderPulse {
-      0%, 100% { opacity: 1;  }
-      50%       { opacity: 0.4; }
-    }
-    .cyber-spinner { animation: spinnerRotate 0.75s linear infinite; }
-    .cyber-btn-pulse { animation: borderPulse 1.5s ease-in-out infinite; }
-  `}</style>
-  </div>
-);
-
 // ─── Variant config ───────────────────────────────────────────────────────────
 const VARIANTS = {
   primary: {
@@ -141,9 +121,7 @@ const CyberButton = ({
   const isDisabled = disabled || loading;
 
   return (
-    <>
-      <CyberStyles />
-      <button
+    <button
         type={type}
         onClick={onClick}
         disabled={isDisabled}
@@ -198,7 +176,6 @@ const CyberButton = ({
           )}
         </span>
       </button>
-    </>
   );
 };
 

@@ -42,46 +42,8 @@ const ANIMATIONS = {
   },
 };
 
-// Keyframes injected once — only what Tailwind can't express
-const CyberStyles = () => (
-  <style>{`
-    @keyframes scanline {
-      0%   { top: 0%; }
-      100% { top: 100%; }
-    }
-    @keyframes cyberPing {
-      0%   { transform: scale(1);   opacity: 0.6; }
-      100% { transform: scale(2.2); opacity: 0;   }
-    }
-    @keyframes borderPulse {
-      0%, 100% { opacity: 1;   }
-      50%       { opacity: 0.5; }
-    }
-    @keyframes flicker {
-      0%, 92%, 100% { opacity: 1;    }
-      94%           { opacity: 0.85; }
-      96%           { opacity: 1;    }
-      98%           { opacity: 0.9;  }
-    }
-
-    .cyber-flicker   { animation: flicker 9s ease-in-out infinite; }
-
-    .cyber-scanline::after {
-      content: '';
-      position: absolute; left: 0; right: 0;
-      height: 1px;
-      animation: scanline 4s linear infinite;
-      pointer-events: none;
-    }
-    .cyber-scanline-green::after { background: linear-gradient(90deg, transparent, rgba(0,255,136,0.35), transparent); }
-    .cyber-scanline-red::after   { background: linear-gradient(90deg, transparent, rgba(255,51,85,0.35),  transparent); }
-
-    .ping-ring   { animation: cyberPing 1.8s ease-out infinite; }
-    .ping-ring-2 { animation: cyberPing 1.8s ease-out infinite; animation-delay: 0.6s; }
-    .pulse-dot   { animation: borderPulse 1.5s ease-in-out infinite; }
-    .status-glow { animation: borderPulse 3s ease-in-out infinite; }
-  `}</style>
-);
+// CyberStyles moved to globals.css - all animations are loaded globally now
+const CyberStyles = () => null;
 
 // --- Corner bracket ---
 const Corner = ({ pos, isSuccess }) => {

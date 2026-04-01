@@ -4,6 +4,7 @@ import { Hydrate, QueryClientProvider } from "@tanstack/react-query";
 import ClientOnlyToaster from "@/components/toast";
 import { SessionProvider } from "next-auth/react";
 import reactQueryClient from "@/config/react-query";
+import { AuthProvider } from "@/context/AuthContext";
 
 import CssBaseline from "@mui/material/CssBaseline";
 import "@/styles/globals.css";
@@ -23,20 +24,22 @@ export default function App({
   return (
     <SessionProvider session={session}>
       <QueryClientProvider client={queryClient}>
-        <Hydrate state={pageProps?.dehydratedState}>
-          <div className="dark">
-            <CssBaseline />
-            {isHomePage ? (
-              <Component {...pageProps} />
-            ) : (
-              <Layout bgColor={pageProps.bgColor} headerBg={pageProps.headerBg}>
+        <AuthProvider>
+          <Hydrate state={pageProps?.dehydratedState}>
+            <div className="dark">
+              <CssBaseline />
+              {isHomePage ? (
                 <Component {...pageProps} />
-              </Layout>
-            )}
+              ) : (
+                <Layout bgColor={pageProps.bgColor} headerBg={pageProps.headerBg}>
+                  <Component {...pageProps} />
+                </Layout>
+              )}
 
-            <ClientOnlyToaster />
-          </div>
-        </Hydrate>
+              <ClientOnlyToaster />
+            </div>
+          </Hydrate>
+        </AuthProvider>
       </QueryClientProvider>
     </SessionProvider>
   );

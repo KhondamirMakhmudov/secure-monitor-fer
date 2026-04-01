@@ -9,8 +9,6 @@ import { config } from "@/config";
 
 const CyberStyles = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap');
-
     @keyframes scanline {
       0%   { top: -2px; }
       100% { top: 100%; }
