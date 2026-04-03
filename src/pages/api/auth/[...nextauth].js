@@ -12,7 +12,7 @@ function decodeJWT(token) {
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch (error) {
@@ -185,17 +185,15 @@ export const authOptions = {
       },
     }),
   ],
-  
+
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === 'production' 
-        ? '__Secure-next-auth.session-token.project3'  // Change to project2 in other file
-        : 'next-auth.session-token.project3',           // Change to project2 in other file
+      name: "next-auth.session-token.project4",
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "lax",
+        path: "/",
+        secure: false, // set to true only if you add HTTPS
       },
     },
   },
@@ -207,7 +205,7 @@ export const authOptions = {
         console.log("User:", user.name);
         console.log(
           "Token expires:",
-          new Date(user.accessTokenExpires).toLocaleString()
+          new Date(user.accessTokenExpires).toLocaleString(),
         );
 
         return {
@@ -228,7 +226,7 @@ export const authOptions = {
       // If there's already an error, keep it
       if (token.error === "RefreshTokenExpired") {
         console.log(
-          "JWT callback: Refresh token expired, user needs to re-login"
+          "JWT callback: Refresh token expired, user needs to re-login",
         );
         return token;
       }
@@ -240,7 +238,7 @@ export const authOptions = {
       const secondsUntilExpiry = Math.floor(timeUntilExpiry / 1000);
 
       console.log(
-        `JWT callback: Token expires in ${secondsUntilExpiry} seconds`
+        `JWT callback: Token expires in ${secondsUntilExpiry} seconds`,
       );
 
       // Refresh if token expires in less than 5 minutes (300 seconds)
@@ -258,7 +256,7 @@ export const authOptions = {
       if (refreshedToken.error) {
         console.error(
           "JWT callback: Refresh failed with error:",
-          refreshedToken.error
+          refreshedToken.error,
         );
       } else {
         console.log("JWT callback: Token refreshed successfully");
