@@ -98,7 +98,7 @@ export default function Home() {
         console.log("✓ Login successful!");
         toast.success("Добро пожаловать");
         saveLogin(username, password);
-        
+
         // Wait a moment for session to be established, then redirect
         setTimeout(() => {
           console.log("Pushing to /secure-section/");
@@ -116,14 +116,16 @@ export default function Home() {
     }
   };
   const handleExit = async () => {
-    setIsLoading(true);
+    console.log("Attempting logout...");
     try {
-      await signOut({ redirect: false });
-      toast.success("Вы успешно вышли из системы");
+      // Use redirect: true to let NextAuth handle the redirect automatically
+      await signOut({
+        redirect: true,
+        callbackUrl: "/",
+      });
     } catch (error) {
+      console.error("Logout error:", error);
       toast.error("Ошибка при выходе");
-    } finally {
-      setIsLoading(false);
     }
   };
 
