@@ -93,23 +93,20 @@ export default function Home() {
       console.log("Response error:", response?.error);
       console.log("Response url:", response?.url);
 
-      // Check if login was successful
-      // response.ok is true when credentials are valid, even without error
-      if (response?.ok === true || (response && !response?.error && response?.url)) {
-        console.log("✓ Login successful, redirecting...");
+      // Check if login was successful - ok: true means success
+      if (response?.ok === true) {
+        console.log("✓ Login successful!");
         toast.success("Добро пожаловать");
         saveLogin(username, password);
         
-        // Use the returned URL or default to secure-section
-        const redirectUrl = response?.url || "/secure-section/";
-        console.log("Redirecting to:", redirectUrl);
-        
-        // Push redirect immediately
-        await router.push(redirectUrl);
+        // Wait a moment for session to be established, then redirect
+        setTimeout(() => {
+          console.log("Pushing to /secure-section/");
+          router.push("/secure-section/");
+        }, 800);
       } else {
-        console.error("✗ Login failed");
-        const errorMsg = response?.error || "Неверные данные";
-        toast.error("Ошибка входа: " + errorMsg);
+        console.error("✗ Login failed with error:", response?.error);
+        toast.error("Ошибка входа: " + (response?.error || "Неверные данные"));
         setIsLoading(false);
       }
     } catch (err) {

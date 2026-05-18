@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 
 export function middleware(req) {
-  // Get the correct cookie name based on environment
-  const cookieName =
-    process.env.NODE_ENV === "production"
-      ? "__Secure-next-auth.session-token.project3"
-      : "next-auth.session-token.project3";
-
-  const token = req.cookies.get(cookieName)?.value;
+  // Try to get token from both possible cookie names
+  const productionCookieName = "__Secure-next-auth.session-token.project3";
+  const developmentCookieName = "next-auth.session-token.project3";
+  
+  const token = 
+    req.cookies.get(productionCookieName)?.value ||
+    req.cookies.get(developmentCookieName)?.value;
+  
   const { pathname } = req.nextUrl;
 
   console.log("TOKEN:", token);
