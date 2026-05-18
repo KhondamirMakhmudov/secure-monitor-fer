@@ -188,12 +188,12 @@ export const authOptions = {
 
   cookies: {
     sessionToken: {
-      name: "next-auth.session-token.project4",
+      name: "next-auth.session-token.project3", // ← Match middleware
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: false, // set to true only if you add HTTPS
+        secure: true, // ← Change to true (since using __Secure- prefix)
       },
     },
   },
