@@ -3,7 +3,7 @@ import { config } from "@/config";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-// Helper function to decode JWT token
+// decode JWT token
 function decodeJWT(token) {
   try {
     const base64Url = token.split(".")[1];
@@ -21,12 +21,117 @@ function decodeJWT(token) {
   }
 }
 
-// Track ongoing refresh operations to prevent race conditions
+// Fetch user details including roles
+async function fetchUserDetails(accessToken) {
+  try {
+    const response = await fetch(
+      `${config.GENERAL_AUTH_URL}/auth/api/v2/users/me`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      console.error("Failed to fetch user details:", response.status);
+      return null;
+    }
+
+    const result = await response.json();
+    return result.data; // Extract from nested data object
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    return null;
+  }
+}
+
+const PERMISSION_SEPARATOR = "::";
+
+function buildPermissionKey(permission) {
+  const resourceName = permission.resource?.name || "";
+  const actionName = permission.action?.name || "";
+
+  if (!resourceName && !actionName) return null;
+
+  return `${resourceName}${PERMISSION_SEPARATOR}${actionName}`;
+}
+
+function parsePermissionKey(permissionKey) {
+  if (typeof permissionKey !== "string") {
+    return { resource: null, action: null };
+  }
+
+  const [resourceName = "", actionName = ""] =
+    permissionKey.split(PERMISSION_SEPARATOR);
+
+  return {
+    resource: resourceName ? { name: resourceName } : null,
+    action: actionName ? { name: actionName } : null,
+  };
+}
+
+// Keep only essential role/permission fields to minimize JWT size
+function sanitizeRoles(rolesArray) {
+  if (!Array.isArray(rolesArray)) return [];
+
+  return rolesArray.map((role) => ({
+    name: role.name,
+    permissions: Array.isArray(role.permissions)
+      ? role.permissions.map(buildPermissionKey).filter(Boolean)
+      : [],
+  }));
+}
+
+function expandRolesDetail(rolesArray) {
+  if (!Array.isArray(rolesArray)) return [];
+
+  return rolesArray.map((role) => ({
+    name: role.name,
+    permissions: Array.isArray(role.permissions)
+      ? role.permissions.map(parsePermissionKey)
+      : [],
+  }));
+}
+
+function extractRoles(rolesArray) {
+  if (!Array.isArray(rolesArray)) return [];
+  return rolesArray.map((role) => role.name);
+}
+
+function extractPermissions(rolesArray) {
+  if (!Array.isArray(rolesArray)) return [];
+
+  const allPermissions = [];
+  rolesArray.forEach((role) => {
+    if (Array.isArray(role.permissions)) {
+      role.permissions.forEach((permission) => {
+        allPermissions.push({
+          resource: permission.resource?.name || null,
+          action: permission.action?.name || null,
+          role: role.name,
+        });
+      });
+    }
+  });
+
+  return allPermissions;
+}
+
+function isAdmin(rolesArray) {
+  if (!Array.isArray(rolesArray)) return false;
+  return rolesArray.some((role) => {
+    const name = (role.name || "").toLowerCase();
+    return name === "admin" || name === "super_admin";
+  });
+}
+
+// Prevent race conditions on simultaneous refresh attempts
 const refreshPromises = new Map();
 
-// Helper function to refresh access token with proper error handling
 async function refreshAccessToken(token) {
-  // Prevent multiple simultaneous refresh attempts for the same token
   const refreshKey = token.refreshToken;
   if (refreshPromises.has(refreshKey)) {
     console.log("Refresh already in progress, waiting...");
@@ -41,62 +146,64 @@ async function refreshAccessToken(token) {
         throw new Error("No refresh token available");
       }
 
-      // TO'G'RILASH: Authorization headerida refresh token jo'natiladi
-      const response = await fetch(`${config.GENERAL_AUTH_URL}/auth/refresh`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token.refreshToken}`, // ← Refresh token shu yerda
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${config.GENERAL_AUTH_URL}/auth/api/v2/sessions:refresh`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token.refreshToken}`,
+            "Content-Type": "application/json",
+          },
         },
-        // Body bo'sh bo'lishi mumkin yoki boshqa ma'lumotlar
-      });
-
-      console.log("Refresh response status:", response.status);
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Refresh token failed:", response.status, errorText);
-
-        // If 401, the refresh token is invalid/expired
-        if (response.status === 401) {
-          throw new Error("RefreshTokenExpired");
-        }
-
+        console.log("Full response:", response);
+        if (response.status === 401) throw new Error("RefreshTokenExpired");
         throw new Error(`Refresh failed: ${response.status}`);
       }
 
       const refreshedTokens = await response.json();
-      console.log("Refresh successful, got new tokens");
+      console.log("=== REFRESH RESPONSE ===");
+      console.log(JSON.stringify(refreshedTokens, null, 2));
 
-      if (!refreshedTokens.access_token) {
+      const tokens = refreshedTokens.data;
+      if (!tokens?.accessToken) {
         throw new Error("No access token in refresh response");
       }
 
-      // Decode new token to get expiration
-      const newDecoded = decodeJWT(refreshedTokens.access_token);
+      const newDecoded = decodeJWT(tokens.accessToken);
 
       if (!newDecoded || !newDecoded.exp) {
         throw new Error("Invalid token received - no expiration");
       }
 
       const accessTokenExpires = newDecoded.exp * 1000;
-      const expiresIn = Math.floor((accessTokenExpires - Date.now()) / 1000);
-      console.log(`New token expires in ${expiresIn} seconds`);
+      console.log(
+        `New token expires in ${Math.floor((accessTokenExpires - Date.now()) / 1000)} seconds`,
+      );
+
+      const userDetails = await fetchUserDetails(tokens.accessToken);
+      const sanitizedRoles = sanitizeRoles(userDetails?.roles || []);
 
       return {
         ...token,
-        accessToken: refreshedTokens.access_token,
-        refreshToken: refreshedTokens.refresh_token || token.refreshToken,
-        tokenType: refreshedTokens.token_type || token.tokenType || "Bearer",
-        accessTokenExpires: accessTokenExpires,
-        userData: newDecoded,
-        error: undefined, // Clear any previous errors
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken || token.refreshToken,
+        tokenType: tokens.tokenType || token.tokenType || "Bearer",
+        accessTokenExpires,
+        userData: {
+          username: newDecoded.username,
+          employee_id: newDecoded.employeeId,
+          unit_code: newDecoded.unitCode,
+        },
+        rolesDetail: sanitizedRoles,
+        error: undefined,
       };
     } catch (error) {
-      console.error("=== TOKEN REFRESH FAILED ===");
-      console.error("Error:", error.message);
-
-      // Return token with error flag
+      console.error("=== TOKEN REFRESH FAILED ===", error.message);
       return {
         ...token,
         error:
@@ -105,7 +212,6 @@ async function refreshAccessToken(token) {
             : "RefreshAccessTokenError",
       };
     } finally {
-      // Clean up the promise tracking
       refreshPromises.delete(refreshKey);
     }
   })();
@@ -126,57 +232,83 @@ export const authOptions = {
       async authorize(credentials) {
         try {
           const { username, password } = credentials;
+          console.log("=== STARTING LOGIN PROCESS ===");
           console.log("Attempting login for user:", username);
 
-          const params = new URLSearchParams();
-          params.append("username", username);
-          params.append("password", password);
-
-          const res = await fetch(`${config.GENERAL_AUTH_URL}/auth/login`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
+          const res = await fetch(
+            `${config.GENERAL_AUTH_URL}/auth/api/v2/sessions`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username, password }),
             },
-            body: params,
-          });
+          );
 
           console.log("Login response status:", res.status);
+          console.log("login details", res);
 
           if (!res.ok) {
-            const errorText = await res.text();
-            console.error("Login failed:", res.status, errorText);
+            console.error("Login failed:", res.status);
             return null;
           }
 
           const data = await res.json();
 
-          if (!data.access_token || !data.refresh_token) {
+          console.log("=== FULL RESPONSE DATA ===");
+          console.log(JSON.stringify(data, null, 2));
+
+          const tokens = data.data;
+          if (!tokens?.accessToken || !tokens?.refreshToken) {
             console.error("Missing tokens in login response");
             return null;
           }
 
-          // Decode token to get user data and expiration
-          const decoded = decodeJWT(data.access_token);
+          const decoded = decodeJWT(tokens.accessToken);
 
           if (!decoded || !decoded.exp) {
             console.error("Invalid token structure");
             return null;
           }
 
-          console.log("Login successful for user:", decoded.username);
+          console.log("=== TOKEN DECODED ===");
+          console.log("Username:", decoded.username);
 
           const accessTokenExpires = decoded.exp * 1000;
 
+          const userDetails = await fetchUserDetails(tokens.accessToken);
+
+          if (!userDetails) {
+            console.error("Failed to fetch user details");
+            return null;
+          }
+
+          const sanitizedRoles = sanitizeRoles(userDetails.roles || []);
+
+          console.log("=== LOGIN COMPLETE ===");
+          console.log(
+            "Token size (bytes):",
+            JSON.stringify({
+              id: decoded.sub,
+              accessToken: tokens.accessToken,
+              refreshToken: tokens.refreshToken,
+              rolesDetail: sanitizedRoles,
+            }).length,
+          );
+
           return {
-            id: decoded.sub || username,
+            id: decoded.sub,
             name: decoded.username || username,
-            email:
-              decoded.email || `${decoded.username || username}@company.com`,
-            accessToken: data.access_token,
-            refreshToken: data.refresh_token,
-            tokenType: data.token_type || "Bearer",
-            accessTokenExpires: accessTokenExpires,
-            userData: decoded,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            tokenType: tokens.tokenType || "Bearer",
+            accessTokenExpires,
+            // Only store minimal user data — recompute roles/permissions in session
+            userData: {
+              username: decoded.username,
+              employee_id: decoded.employeeId,
+              unit_code: decoded.unitCode,
+            },
+            rolesDetail: sanitizedRoles,
           };
         } catch (error) {
           console.error("Authorize error:", error);
@@ -186,137 +318,113 @@ export const authOptions = {
     }),
   ],
 
-  cookies: {
-    sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token.project3"
-          : "next-auth.session-token.project3",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: false, // true in prod, false in dev
-      },
-    },
-  },
   callbacks: {
-    async jwt({ token, user, trigger }) {
-      // Initial sign in
+    async jwt({ token, user }) {
+      // Initial sign in — store only essential fields
       if (user) {
         console.log("=== INITIAL JWT CREATION ===");
         console.log("User:", user.name);
-        console.log(
-          "Token expires:",
-          new Date(user.accessTokenExpires).toLocaleString(),
-        );
-
         return {
-          ...token,
-          ...user,
+          id: user.id,
+          name: user.name,
+          accessToken: user.accessToken,
+          refreshToken: user.refreshToken,
+          tokenType: user.tokenType,
+          accessTokenExpires: user.accessTokenExpires,
+          userData: user.userData,
+          rolesDetail: user.rolesDetail,
         };
       }
 
-      // No access token means something is wrong
       if (!token.accessToken) {
-        console.error("JWT callback: No access token found");
-        return {
-          ...token,
-          error: "NoAccessToken",
-        };
+        return { ...token, error: "NoAccessToken" };
       }
 
-      // If there's already an error, keep it
       if (token.error === "RefreshTokenExpired") {
-        console.log(
-          "JWT callback: Refresh token expired, user needs to re-login",
-        );
         return token;
       }
 
-      // Check token expiration
       const now = Date.now();
-      const expiresAt = token.accessTokenExpires;
-      const timeUntilExpiry = expiresAt - now;
-      const secondsUntilExpiry = Math.floor(timeUntilExpiry / 1000);
-
+      const secondsUntilExpiry = Math.floor(
+        (token.accessTokenExpires - now) / 1000,
+      );
       console.log(
         `JWT callback: Token expires in ${secondsUntilExpiry} seconds`,
       );
 
-      // Refresh if token expires in less than 5 minutes (300 seconds)
-      // This gives plenty of time for the refresh to complete
-      const shouldRefresh = secondsUntilExpiry < 300;
-
-      if (!shouldRefresh) {
+      if (secondsUntilExpiry >= 300) {
         return token;
       }
 
-      // Token needs refresh
       console.log("=== TOKEN REFRESH NEEDED ===");
-      const refreshedToken = await refreshAccessToken(token);
-
-      if (refreshedToken.error) {
-        console.error(
-          "JWT callback: Refresh failed with error:",
-          refreshedToken.error,
-        );
-      } else {
-        console.log("JWT callback: Token refreshed successfully");
-      }
-
-      return refreshedToken;
+      return await refreshAccessToken(token);
     },
 
     async session({ session, token }) {
-      // If refresh token expired, clear session
+      console.log("=== BUILDING SESSION ===");
+
       if (token.error === "RefreshTokenExpired") {
-        console.log("Session callback: Refresh token expired");
-        return {
-          ...session,
-          error: "RefreshTokenExpired",
-          user: null,
-        };
+        return { ...session, error: "RefreshTokenExpired", user: null };
       }
 
-      // If there's an error but not expired, keep minimal session
       if (token.error) {
         session.error = token.error;
       }
 
-      // Build session with token data
       session.accessToken = token.accessToken;
       session.refreshToken = token.refreshToken;
       session.tokenType = token.tokenType;
       session.accessTokenExpires = token.accessTokenExpires;
 
+      // Expand compact JWT roles into the original structure for the app
+      const roles = expandRolesDetail(token.rolesDetail || []);
+
       session.user = {
         id: token.id,
         name: token.name,
-        email: token.email,
         username: token.userData?.username,
-        role: token.userData?.role,
         employee_id: token.userData?.employee_id,
         unit_code: token.userData?.unit_code,
+        roles: extractRoles(roles),
+        rolesDetail: roles,
+        permissions: extractPermissions(roles),
+        isAdmin: isAdmin(roles),
       };
+
+      console.log("Session roles:", session.user.roles);
+      console.log(
+        "Session permissions count:",
+        session.user.permissions.length,
+      );
+      console.log("=== SESSION BUILT SUCCESSFULLY ===");
 
       return session;
     },
   },
 
+  cookies: {
+    sessionToken: {
+      name: "next-auth.session-token.project3",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: false, // set to true only if you add HTTPS
+      },
+    },
+  },
+
   events: {
     async signOut({ token }) {
-      console.log("User signed out");
-      // Optionally call logout endpoint to invalidate tokens on server
+      console.log("=== USER SIGNED OUT ===");
       try {
         await fetch(`${config.GENERAL_AUTH_URL}/auth/logout`, {
           method: "POST",
           headers: {
-            Authorization: `${token.tokenType || "Bearer"} ${
-              token.accessToken
-            }`,
+            Authorization: `${token.tokenType || "Bearer"} ${token.accessToken}`,
           },
         });
+        console.log("Logout API called successfully");
       } catch (error) {
         console.error("Logout error:", error);
       }
@@ -330,7 +438,7 @@ export const authOptions = {
 
   pages: {
     signIn: "/",
-    signOut: "/",
+    signOut: `${process.env.NEXTAUTH_URL}/` || "/",
     error: "/auth/error",
   },
 
@@ -339,5 +447,6 @@ export const authOptions = {
 
 export default NextAuth(authOptions);
 
+console.log("=== NEXTAUTH CONFIGURATION LOADED ===");
 console.log("NEXTAUTH_SECRET loaded:", !!process.env.NEXTAUTH_SECRET);
-console.log("Secret length:", process.env.NEXTAUTH_SECRET?.length);
+console.log("Auth API URL:", config.GENERAL_AUTH_URL);

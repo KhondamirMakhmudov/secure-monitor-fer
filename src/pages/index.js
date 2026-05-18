@@ -86,19 +86,10 @@ export default function Home() {
         callbackUrl: "/secure-section/",
       });
 
-      console.log("SignIn response:", response);
-      console.log("Response ok:", response?.ok);
-      console.log("Response error:", response?.error);
-
       if (response?.ok && !response?.error) {
-        console.log("Login successful, redirecting...");
         toast.success("Добро пожаловать");
         saveLogin(username, password);
-        
-        // Add a small delay to ensure session is set
-        setTimeout(() => {
-          router.push("/secure-section/");
-        }, 500);
+        router.push("/secure-section/");
       } else {
         console.error("Login failed:", response?.error);
         toast.error("Ошибка входа: " + (response?.error || "Неверные данные"));
@@ -130,6 +121,7 @@ export default function Home() {
   return (
     <div suppressHydrationWarning>
       <style suppressHydrationWarning>{`
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&display=swap');
         
         @keyframes gridPulse {
           0%, 100% { opacity: 0.15; }
