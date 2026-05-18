@@ -188,12 +188,15 @@ export const authOptions = {
 
   cookies: {
     sessionToken: {
-      name: "next-auth.session-token.project3", // ← Match middleware
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token.project3"
+          : "next-auth.session-token.project3",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true, // ← Change to true (since using __Secure- prefix)
+        secure: process.env.NODE_ENV === "production", // true in prod, false in dev
       },
     },
   },
