@@ -11,7 +11,7 @@ export function middleware(req) {
 
   const { pathname } = req.nextUrl;
 
-  console.log("TOKEN:", token);
+  console.log("TOKEN:", !!token);
   console.log("Requested Path:", pathname);
 
   // Protected routes that require authentication
@@ -32,12 +32,7 @@ export function middleware(req) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // If user has token and tries to access login page → redirect to secure-section
-  if (token && pathname === "/") {
-    console.log("Already authenticated - Redirecting to secure-section");
-    return NextResponse.redirect(new URL("/secure-section", req.url));
-  }
-
+  // Allow all other access - don't force authenticated users away from home page
   return NextResponse.next();
 }
 
