@@ -86,18 +86,35 @@ export default function Home() {
         callbackUrl: "/secure-section/",
       });
 
-      if (response?.ok && !response?.error) {
+      console.log("=== SignIn Response ===");
+      console.log("Full response:", response);
+      console.log("Response ok:", response?.ok);
+      console.log("Response status:", response?.status);
+      console.log("Response error:", response?.error);
+      console.log("Response url:", response?.url);
+
+      // Check if login was successful
+      // response.ok is true when credentials are valid, even without error
+      if (response?.ok === true || (response && !response?.error && response?.url)) {
+        console.log("✓ Login successful, redirecting...");
         toast.success("Добро пожаловать");
         saveLogin(username, password);
-        router.push("/secure-section/");
+        
+        // Use the returned URL or default to secure-section
+        const redirectUrl = response?.url || "/secure-section/";
+        console.log("Redirecting to:", redirectUrl);
+        
+        // Push redirect immediately
+        await router.push(redirectUrl);
       } else {
-        console.error("Login failed:", response?.error);
-        toast.error("Ошибка входа: " + (response?.error || "Неверные данные"));
+        console.error("✗ Login failed");
+        const errorMsg = response?.error || "Неверные данные";
+        toast.error("Ошибка входа: " + errorMsg);
+        setIsLoading(false);
       }
     } catch (err) {
       console.error("Login exception:", err);
       toast.error("Произошла ошибка при входе в систему");
-    } finally {
       setIsLoading(false);
     }
   };
