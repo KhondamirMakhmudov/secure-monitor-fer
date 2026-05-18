@@ -86,10 +86,19 @@ export default function Home() {
         callbackUrl: "/secure-section/",
       });
 
+      console.log("SignIn response:", response);
+      console.log("Response ok:", response?.ok);
+      console.log("Response error:", response?.error);
+
       if (response?.ok && !response?.error) {
+        console.log("Login successful, redirecting...");
         toast.success("Добро пожаловать");
         saveLogin(username, password);
-        router.push("/secure-section/");
+        
+        // Add a small delay to ensure session is set
+        setTimeout(() => {
+          router.push("/secure-section/");
+        }, 500);
       } else {
         console.error("Login failed:", response?.error);
         toast.error("Ошибка входа: " + (response?.error || "Неверные данные"));
