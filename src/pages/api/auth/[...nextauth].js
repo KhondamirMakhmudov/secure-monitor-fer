@@ -406,8 +406,8 @@ export const authOptions = {
     sessionToken: {
       name:
         process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token.project3"
-          : "next-auth.session-token.project3",
+          ? "__Secure-next-auth.session-token.project4"
+          : "next-auth.session-token.project4",
       options: {
         httpOnly: true,
         sameSite: "lax",
