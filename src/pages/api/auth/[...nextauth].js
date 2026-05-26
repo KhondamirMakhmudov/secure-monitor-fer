@@ -404,15 +404,12 @@ export const authOptions = {
 
   cookies: {
     sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token.project4"
-          : "next-auth.session-token.project4",
+      name: "next-auth.session-token.project4",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production", // true for HTTPS in production
+        secure: false, // set to true only when serving over HTTPS
       },
     },
   },
