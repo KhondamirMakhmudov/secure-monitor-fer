@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 export function middleware(req) {
   // Try to get token from both possible cookie names
-  const productionCookieName = "__Secure-next-auth.session-token.project3";
-  const developmentCookieName = "next-auth.session-token.project3";
+  const productionCookieName = "__Secure-next-auth.session-token.project4";
+  const developmentCookieName = "next-auth.session-token.project4";
 
   const token =
     req.cookies.get(productionCookieName)?.value ||
