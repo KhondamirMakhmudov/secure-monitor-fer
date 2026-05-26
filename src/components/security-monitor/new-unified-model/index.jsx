@@ -18,13 +18,7 @@ import dayjs from "dayjs";
 
 // Constants
 const TIME_SECTION_NAMES = {
-  0: "КПП АО ТЭС",
-  1: "КПП АО ТЭС",
-  2: "КПП АО ТЭС",
-  3: "КПП АО ТЭС",
-  4: "КПП АО ТЭС",
-  5: "КПП АО ТЭС",
-  6: "КПП АО ТЭС",
+  0: "VIP (без графика)",
 };
 
 const ERROR_MESSAGES = {
@@ -129,6 +123,8 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
     ? dayjs(data.real_utc).format("DD.MM.YYYY")
     : "";
 
+  const checkpointName = data?.check_point_name || data?.checkPointName || "—";
+
   useEffect(() => {
     if (!isValidUser || !session?.accessToken) {
       setEmployeeInfo(null);
@@ -230,7 +226,7 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
               {eventLabel}
             </span>
             <span className="px-2.5 py-1 rounded-md text-[10px] font-mono-cyber bg-white/[0.04] border border-white/[0.08] text-slate-500">
-              {data.checkPointName}
+              {checkpointName}
             </span>
             <span
               className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider font-mono-cyber ${
@@ -349,8 +345,11 @@ const NewUnifiedPanel = ({ data, variant = "main", panelNumber }) => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-mono-cyber text-[11px] tracking-widest text-slate-500">
+            <span className="font-mono-cyber text-[12px] tracking-widest text-slate-500">
               {formattedDate}
+            </span>
+            <span className="px-2 py-0.5 rounded text-[14px] font-mono-cyber text-sky-400 bg-sky-500/10 border border-sky-500/30 max-w-[200px] truncate">
+              {checkpointName}
             </span>
             <span className="font-mono-cyber text-[10px] font-bold px-2 py-0.5 rounded text-sky-400 bg-slate-800 border border-slate-700">
               SYS-02

@@ -133,7 +133,11 @@ const Index = () => {
   const checkpoints = useMemo(() => {
     if (!devices.length) return [];
     const filtered = devices.filter((d) =>
-      ["КПП ТЭС", "КПП СОЗЛАШ", "КПП 3"].includes(d.checkPointName),
+      [
+        "КТ-1 (Основной КПП ФерТЭС)",
+        "КТ-2 (Основной КПП ФерТЭС)",
+        "КТ-3 (Основной КПП ФерТЭС)",
+      ].includes(d.checkPointName),
     );
     return filtered.filter(
       (item, index, self) =>
@@ -289,11 +293,11 @@ const Index = () => {
                       data={latestData}
                       variant="main"
                     />
-                    <TurnstileCard
+                    {/* <TurnstileCard
                       checkPointName={cp.checkPointName}
                       entryIp={entryDevice?.ipAddress}
                       exitIp={exitDevice?.ipAddress}
-                    />
+                    /> */}
                   </div>
                 );
               })}

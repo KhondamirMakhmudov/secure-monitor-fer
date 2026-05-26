@@ -10,7 +10,7 @@ import { useSession } from "next-auth/react";
 
 const navLinks = [
   { href: "/secure-section", label: "Система контроля доступа" },
-  { href: "/reports", label: "Отчёты" },
+  // { href: "/reports", label: "Отчёты" },
 ];
 
 const Header = () => {
